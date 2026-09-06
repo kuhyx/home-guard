@@ -57,6 +57,16 @@ anything with `sudo` — the HMAC key step only prints the command to run
 yourself if you want signed log entries; the gate works (with unsigned
 entries) even if you never run it.
 
+It **refuses to enable the timer without a desktop Firebase session**
+(`~/.config/home_guard/firebase_auth.json`): a gate that can't publish its
+challenge can never be satisfied by a photo, so every slot would burn
+escape-hatch budget. Seed one first — an interactive Google consent
+round-trip that deliberately seeds every desktop app together:
+
+```bash
+python3 ~/utils/crdt-sync/tool/seed_session.py
+```
+
 ## Usage
 
 ```bash

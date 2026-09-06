@@ -22,6 +22,8 @@ readonly REPO_DIR
 readonly SYSTEM_PYTHON="/usr/bin/python3"
 readonly UNIT_DIR="${HOME}/.config/systemd/user"
 readonly HMAC_KEY="/etc/workout-locker/hmac.key"
+readonly FIREBASE_SESSION="${HOME}/.config/home_guard/firebase_auth.json"
+readonly SEED_SESSION="${HOME}/utils/crdt-sync/tool/seed_session.py"
 
 log() { printf 'install: %s\n' "$1" >&2; }
 fail() { printf 'install: FAILED -- %s\n' "$1" >&2; exit 1; }
@@ -67,6 +69,23 @@ seed_zone_rotation() {
     "$SYSTEM_PYTHON" -m home_guard init
 }
 
+require_firebase_session() {
+    # The gate publishes each challenge over Firebase; without a desktop
+    # session it arms on schedule and can never be satisfied by a photo --
+    # every slot would burn escape-hatch budget. That is a broken install,
+    # so this gates rather than warns. The seeding itself is an interactive
+    # Google OAuth round trip (a browser consent page), which is why it is
+    # not run from here.
+    if [[ -s "$FIREBASE_SESSION" ]]; then
+        log "Firebase session present at $FIREBASE_SESSION"
+        return
+    fi
+    log "no Firebase session at $FIREBASE_SESSION -- not enabling the timer."
+    log "  seed one (seeds every desktop app together, on purpose):"
+    log "    python3 $SEED_SESSION"
+    fail "then re-run this script"
+}
+
 install_units() {
     log "installing systemd user units into $UNIT_DIR"
     mkdir -p "$UNIT_DIR"
@@ -83,6 +102,7 @@ main() {
     verify_imports
     ensure_hmac_key
     seed_zone_rotation
+    require_firebase_session
     install_units
     log "done. Test the lock now (safe, closeable): python3 -m home_guard gate --demo"
 }
