@@ -1,0 +1,20 @@
+[Unit]
+Description=Home Guard photo-verified home-tidy gate (periodic check)
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+# DISPLAY/XAUTHORITY and the pre-start sleep mirror diet-guard-gate.service
+# exactly, including the same race it documents: a Persistent=true catch-up
+# run can fire before the display manager has finished writing
+# ~/.Xauthority, so pointing at the path is not itself the fix. `home_guard
+# gate` calls gatelock.wait_for_x_server() before opening any window, which
+# polls until the display is actually connectable (or gives up and lets the
+# next scheduled tick retry) -- the sleep just gives the session a head start.
+#
+# No PYTHONPATH needed: home_guard is pip-installed (see install.sh), so
+# /usr/bin/python finds it via user site-packages.
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=%h/.Xauthority
+ExecStartPre=/bin/sleep 1
+ExecStart=/usr/bin/python -m home_guard gate

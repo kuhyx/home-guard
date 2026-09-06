@@ -1,0 +1,19 @@
+[Unit]
+Description=Periodically run the Home Guard gate check
+
+[Timer]
+# Wall-clock schedule (every 30 min), same idiom as diet-guard-gate.timer.
+# The due-slot arithmetic lives in gate_is_due() (a single daily slot by
+# default), so the timer only needs to fire often enough to notice the
+# boundary shortly after it opens.
+#
+# OnCalendar, not OnBootSec/OnUnitActiveSec: the gate is a *blocking*
+# oneshot -- it stays up until a zone is cleared -- and a monotonic
+# schedule computes no next elapse while the service is still running,
+# leaving the timer dormant across a long lock. OnCalendar re-arms every
+# period regardless, and Persistent catches a run missed while suspended.
+OnCalendar=*-*-* *:00/30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

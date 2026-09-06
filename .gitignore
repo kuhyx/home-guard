@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+.Python
+build/
+dist/
+*.egg-info/
+.env
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.lcov
+htmlcov/
+*.log
+.DS_Store
+
+# ci_mirror.sh cached requirements.txt venv (rebuilt on demand)
+.ci-mirror-venv/
+
+# Flutter build output
+app/build/
+app/.dart_tool/

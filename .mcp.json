@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "home-guard": {
+      "type": "stdio",
+      "command": "${HOME}/.venvs/home-guard-mcp/bin/python",
+      "args": ["-m", "home_guard._mcp"],
+      "env": {}
+    }
+  }
+}

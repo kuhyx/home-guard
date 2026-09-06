@@ -1,0 +1,61 @@
+[project]
+name = "home-guard"
+version = "0.1.0"
+description = "Tkinter/systemd photo-verified home-tidy gate, rotating one zone at a time"
+requires-python = ">=3.14"
+dependencies = [
+    "gatelock @ git+https://github.com/kuhyx/utils@gatelock-v0.7.3#subdirectory=gatelock",
+    "crdt-sync @ git+https://github.com/kuhyx/utils@crdt-sync-v0.9.1#subdirectory=crdt-sync",
+]
+
+# Optional extras. The `mcp` group is ONLY needed by the MCP server
+# (home_guard._mcp), which Claude Code spawns via a dedicated venv (see
+# scripts/setup_mcp.sh / .mcp.json). It is deliberately NOT a core dependency
+# so the systemd/CLI system-python path stays dependency-light and never has
+# to import the MCP SDK.
+[project.optional-dependencies]
+mcp = ["mcp==2.1.1"]
+
+# Without this, setuptools' flat-layout auto-discovery treats the Flutter
+# app/ directory as a second top-level package and refuses to build.
+[tool.setuptools.packages.find]
+include = ["home_guard*"]
+
+[tool.ruff]
+target-version = "py314"
+include = ["*.py", "**/*.py"]
+exclude = [".git", ".venv", "__pycache__", "build", "dist", ".eggs"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D203",
+    "D213",
+    "COM812",
+    "ISC001",
+    "S603",
+]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**/*.py" = ["ARG", "D", "PLC0415", "PLR2004", "S101", "S107", "SLF001"]
+"**/test_*.py" = ["ARG", "D", "PLC0415", "PLR2004", "S101", "S107", "SLF001"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+force-single-line = false
+force-sort-within-sections = true
+known-first-party = ["home_guard"]
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "double"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.pytest.ini_options]
+testpaths = ["home_guard/tests"]
