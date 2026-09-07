@@ -23,6 +23,26 @@ if TYPE_CHECKING:
 _XVFB_START_TIMEOUT_SECONDS = 5.0
 
 
+@pytest.fixture(autouse=True)
+def _isolate_free_days(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Never let the gate read the developer's real free-day pool.
+
+    ``due_slots`` consults ``freedays.is_free_day()``, which defaults to
+    ``~/.local/share/freedays/free_days.json``. Without this, marking a real
+    free day would make every "the gate is due" test here fail -- and worse,
+    it would fail for a reason that looks nothing like the cause.
+    """
+    import freedays._api
+
+    # Deliberately not created: a missing pool reads as "no free days", and
+    # creating it would leave a stray directory in every test's tmp_path --
+    # which one test rightly asserts is empty.
+    redirected = freedays.Paths.under(tmp_path / "freedays")
+    monkeypatch.setattr(
+        freedays._api, "resolve_paths", lambda paths: paths or redirected
+    )
+
+
 @pytest.fixture
 def xvfb_display(tmp_path: Path) -> Iterator[dict[str, str]]:
     """Start an isolated Xvfb server; yield the env vars a Tk test needs.

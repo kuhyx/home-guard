@@ -38,7 +38,8 @@ verify_imports() {
     # The check that matters: every runtime dependency must resolve for the
     # interpreter systemd will launch, not for whatever is on $PATH now.
     log "verifying imports with $SYSTEM_PYTHON"
-    "$SYSTEM_PYTHON" -c "import home_guard, gatelock, crdt_sync; print('imports OK')" \
+    "$SYSTEM_PYTHON" -c \
+        "import home_guard, gatelock, crdt_sync, freedays; print('imports OK')" \
         || fail "a runtime dependency is missing from the system python"
 }
 
