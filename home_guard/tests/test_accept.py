@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import base64
 from datetime import UTC, datetime
+import json
 from typing import TYPE_CHECKING
 
 from home_guard._accept import process_evidence
 from home_guard._challenge import mint_challenge
+from home_guard._constants import SYNC_CHALLENGE_PATH
 from home_guard._log import cleared_slots_today
 from home_guard._paths import HomeGuardPaths
+from home_guard._sync_challenge import publish_challenge
 from home_guard._sync_evidence import fetch_evidence
 from home_guard._zone_cursor import current_zone
 from home_guard._zone_list import record_zone_list_change
@@ -163,6 +166,31 @@ def test_accept_drains_the_evidence_node(tmp_path: Path) -> None:
     client.put_file_text(SYNC_EVIDENCE_PATH, "some-payload", message="")
     process_evidence(payload, now=now, client=client, paths=paths)
     assert fetch_evidence(client=client) is None
+
+
+def test_accept_republishes_the_challenge_as_consumed(tmp_path: Path) -> None:
+    paths = _paths(tmp_path)
+    record_zone_list_change(
+        ("desk",), effective_from="1970-01-01", path=paths.zone_list_path
+    )
+    now = datetime(2026, 9, 6, 9, tzinfo=UTC)
+    record = mint_challenge(
+        day="2026-09-06", slot="0800", zone="desk", now=now, paths=paths
+    )
+    client = FakeRemoteStore()
+    publish_challenge(record, client=client)
+    payload = {
+        "day": "2026-09-06",
+        "slot": "0800",
+        "zone": "desk",
+        "token": record.token,
+        "photo_b64": base64.b64encode(_RAW_PHOTO).decode("ascii"),
+    }
+    process_evidence(payload, now=now, client=client, paths=paths)
+    # The phone decides whether to offer the camera from this node alone.
+    published = json.loads(client.get_file_text(SYNC_CHALLENGE_PATH) or "{}")
+    assert published["consumed"] is True
+    assert published["token"] == record.token
 
 
 def test_no_drain_flag_leaves_evidence_untouched(tmp_path: Path) -> None:

@@ -1,4 +1,4 @@
-"""The full accept pipeline: verify, persist the photo, log, rotate, drain.
+"""The full accept pipeline: verify, photo, log, rotate, re-publish, drain.
 
 Wires together every module that has to agree before a slot counts as
 cleared. Kept separate from :mod:`home_guard._poller` so the pipeline itself
@@ -8,13 +8,14 @@ directly.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
 from home_guard._challenge import consume_challenge, verify_evidence
 from home_guard._log import ClearEntryData, append_clear_entry
 from home_guard._paths import resolve_paths
+from home_guard._sync_challenge import publish_challenge
 from home_guard._sync_evidence import drain_evidence, save_evidence_photo
 from home_guard._zone_cursor import advance
 
@@ -94,5 +95,12 @@ def process_evidence(
         record, path=resolved.challenge_path, key_file=resolved.challenge_key_file
     )
     if drain:
+        # Re-publish the record as consumed BEFORE draining: the phone reads
+        # the challenge node to decide whether to offer the camera at all, and
+        # the local store is the only place `consumed` was ever flipped.
+        # Without this the phone re-offered "Take photo" straight after an
+        # accept, the second upload was rejected `already_consumed`, and the
+        # app sat in "unconfirmed" for the rest of the day.
+        publish_challenge(replace(record, consumed=True), client=client)
         drain_evidence(client=client)
     return AcceptResult(accepted=True, reason=None, photo_path=photo_path)
