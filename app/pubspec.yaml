@@ -2,7 +2,7 @@ name: home_guard_app
 description: "home-guard phone app: shows the zone the PC is waiting on and uploads a camera-only photo echoing the PC's single-use challenge token."
 publish_to: 'none'
 
-version: 1.0.14+1
+version: 1.0.15+1
 
 environment:
   sdk: ^3.12.2
@@ -54,7 +54,7 @@ flutter:
   uses-material-design: true
 
 # Launcher icon generation. Source art is produced by the shared generator:
-#   PYTHONPATH=~/testsAndMisc python3 -m python_pkg.app_icons generate --app <key>
+#   PYTHONPATH=~/src/testsAndMisc python3 -m python_pkg.app_icons generate --app <key>
 # then run: dart run flutter_launcher_icons
 flutter_launcher_icons:
   android: true

@@ -23,7 +23,7 @@ readonly SYSTEM_PYTHON="/usr/bin/python3"
 readonly UNIT_DIR="${HOME}/.config/systemd/user"
 readonly HMAC_KEY="/etc/workout-locker/hmac.key"
 readonly FIREBASE_SESSION="${HOME}/.config/home_guard/firebase_auth.json"
-readonly SEED_SESSION="${HOME}/utils/crdt-sync/tool/seed_session.py"
+readonly SEED_SESSION="${HOME}/src/utils/crdt-sync/tool/seed_session.py"
 
 log() { printf 'install: %s\n' "$1" >&2; }
 fail() { printf 'install: FAILED -- %s\n' "$1" >&2; exit 1; }

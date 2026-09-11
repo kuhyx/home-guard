@@ -64,7 +64,7 @@ escape-hatch budget. Seed one first — an interactive Google consent
 round-trip that deliberately seeds every desktop app together:
 
 ```bash
-python3 ~/utils/crdt-sync/tool/seed_session.py
+python3 ~/src/utils/crdt-sync/tool/seed_session.py
 ```
 
 ## Usage
@@ -86,7 +86,7 @@ upload it watches the evidence node until the PC drains it and reports
 (Google one-tap, account `321krzychu@gmail.com`).
 
 ```bash
-~/.claude/scripts/phone_deploy.sh ~/home-guard/app --release   # build + install
+~/.claude/scripts/phone_deploy.sh ~/src/home-guard/app --release   # build + install
 scripts/register_oauth_client.sh   # one-time: Android OAuth client (console)
 scripts/set_release_secrets.sh     # one-time: CI signing secrets
 ```
