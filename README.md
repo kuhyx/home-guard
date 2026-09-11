@@ -76,6 +76,26 @@ python -m home_guard gate            # what systemd actually runs every ~30 min
 python -m home_guard gate --demo     # soft, closeable lock — safe to try
 ```
 
+## Phone app
+
+`app/` is the Flutter half (`com.kuhy.home_guard`, Android). One screen: the
+zone the PC is waiting on and a single **Take photo** button that opens the
+in-app camera — there is no gallery picker anywhere, on purpose. After the
+upload it watches the evidence node until the PC drains it and reports
+"accepted". Firebase-only, signed in through the shared Sync settings screen
+(Google one-tap, account `321krzychu@gmail.com`).
+
+```bash
+~/.claude/scripts/phone_deploy.sh ~/home-guard/app --release   # build + install
+scripts/register_oauth_client.sh   # one-time: Android OAuth client (console)
+scripts/set_release_secrets.sh     # one-time: CI signing secrets
+```
+
+Tests: `cd app && flutter analyze && flutter test --coverage` (100% line
+coverage; the camera and keystore adapters are `coverage:ignore` platform
+channels and are exercised on the phone instead). CI (`release-apk.yml`) runs
+analyze + test and only then publishes a signed APK per commit.
+
 ## Testing
 
 ```bash

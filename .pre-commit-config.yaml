@@ -70,6 +70,37 @@ repos:
         language: system
         types: [shell]
 
+      # The clean-venv CI mirror (pytest + pre-commit --all-files + the
+      # Flutter analyze/test gates for app/), run before every push so a red
+      # CI is caught locally. Same script diet-guard runs.
+      - id: ci-mirror
+        name: CI mirror (clean-venv pytest + flutter gates + pre-commit)
+        entry: bash scripts/ci_mirror.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        require_serial: true
+        stages: [pre-push]
+
+      # A local `dependency_overrides: crdt_sync: path:` pins the phone app to
+      # an unpublished library state; every sibling app blocks it the same way.
+      - id: crdt-sync-override
+        name: no local crdt_sync dependency_override
+        entry: bash scripts/check_no_crdt_sync_override.sh app/pubspec.yaml
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      # Every commit ships its own patch bump, so the release workflow's clean
+      # vX.Y.Z tag tracks HEAD instead of whatever version was last hand-edited.
+      - id: bump-patch-version
+        name: Bump patch version in app/pubspec.yaml
+        entry: bash scripts/bump_patch_version.sh --pubspec app/pubspec.yaml
+        language: system
+        pass_filenames: false
+        always_run: true
+        require_serial: true
+
       # The shared 250-line cap. Checks only the files in the commit, so an
       # unrelated commit never breaks; exits 1 rather than warning. No
       # baseline and no allowlist -- those are suppressions.

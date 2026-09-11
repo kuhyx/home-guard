@@ -1,0 +1,66 @@
+name: home_guard_app
+description: "home-guard phone app: shows the zone the PC is waiting on and uploads a camera-only photo echoing the PC's single-use challenge token."
+publish_to: 'none'
+
+version: 1.0.8+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  crdt_sync:
+    git:
+      url: https://github.com/kuhyx/utils
+      ref: crdt_sync_dart-v0.11.1
+      path: crdt_sync_dart
+  cupertino_icons: 1.0.9
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: 11.1.0
+
+  # One-tap sign-in for the sync account. App-side only: crdt_sync stays pure
+  # Dart so it keeps working on Linux desktop and headless.
+  google_sign_in: 7.2.0
+  http: 1.6.0
+
+  # Pure-Dart JPEG re-encoder: the PC rejects any decoded photo over
+  # 600 kB, so the phone shrinks until it fits BEFORE uploading. Pure Dart
+  # so the size guarantee is unit-tested, not hoped for.
+  image: 4.9.2
+
+  # Camera-only capture. The gallery source is never rendered -- see
+  # docs/DOCS-marker-protocol.md, "Why camera-only capture matters".
+  image_picker: 1.2.3
+  shared_preferences: 2.5.5
+
+  # Shared "Sync settings" screen (Firebase), reused across every kuhy app
+  # that syncs. Firebase-only: this app is new, so no GitHub mirror.
+  sync_settings_ui:
+    git:
+      url: https://github.com/kuhyx/utils
+      ref: sync_settings_ui-v0.4.1
+      path: sync_settings_ui
+  uuid: 4.6.0
+
+dev_dependencies:
+  # Generates the Android launcher icons from assets/icon/ (see
+  # python_pkg/app_icons in testsAndMisc for the shared style).
+  flutter_launcher_icons: 0.14.4
+  flutter_test:
+    sdk: flutter
+  very_good_analysis: ^11.0.0
+
+flutter:
+  uses-material-design: true
+
+# Launcher icon generation. Source art is produced by the shared generator:
+#   PYTHONPATH=~/testsAndMisc python3 -m python_pkg.app_icons generate --app <key>
+# then run: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#211D1B"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  adaptive_icon_monochrome: "assets/icon/icon_monochrome.png"
+  min_sdk_android: 21

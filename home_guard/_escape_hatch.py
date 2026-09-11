@@ -79,13 +79,18 @@ def grant_escape(
     (budget exhausted, invalid draft, or the history could not be saved), or
     ``None`` on success.
     """
-    if tracker.is_budget_exhausted():
+    reference = now if now is not None else datetime.now(tz=UTC)
+    today = reference.strftime("%Y-%m-%d")
+    # Same clock for the budget check as for the record: an earlier draft
+    # checked the windows against the real calendar while recording under
+    # ``now``, so the budget silently reopened as soon as the tests' fixed
+    # dates aged out of the 7-day window (CI red from 2026-09-06 on).
+    if tracker.is_budget_exhausted(today=today):
         return "No uses of the sync-outage hatch left in any window right now."
     complaint = tracker.validate(draft)
     if complaint is not None:
         return complaint
-    reference = now if now is not None else datetime.now(tz=UTC)
-    if not tracker.record(draft, today=reference.strftime("%Y-%m-%d")):
+    if not tracker.record(draft, today=today):
         return "Could not save the escape record -- try again."
     resolved = resolve_paths(paths)
     append_escape_entry(
