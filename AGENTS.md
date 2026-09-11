@@ -22,6 +22,9 @@ commands + conventions only.
   and re-run the test suite immediately after either.
 - Run the CLI directly: `python -m home_guard {init,status,gate,gate --demo}`.
 - MCP server venv: `./scripts/setup_mcp.sh` (see README's MCP section).
+- Git hooks on a fresh clone: `scripts/install_hooks.sh` (pre-commit + pre-push
+  + the post-gate version bump for `app/pubspec.yaml`; see the script for
+  why the bump is not a pre-commit hook).
 - Install for real (not run automatically by any agent session — this
   enables a systemd timer that can lock the screen): `bash install.sh`.
 
