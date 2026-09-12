@@ -101,6 +101,23 @@ class ZoneHistory {
     return best?.zones ?? defaultZones;
   }
 
+  /// Moves the item at [oldIndex] to [newIndex], for `onReorderItem`.
+  ///
+  /// Pure and separately tested because the index arithmetic here is the
+  /// classic off-by-one, and getting it wrong silently reorders the rotation
+  /// -- changing which zone comes round next, with nothing visibly broken.
+  ///
+  /// `onReorderItem` (unlike the deprecated `onReorder`) hands over a
+  /// [newIndex] already adjusted for the removed item, so this is a plain
+  /// remove-then-insert. Applying the familiar
+  /// `newIndex > oldIndex ? newIndex - 1 : newIndex` fixup on top of it is
+  /// wrong, and was wrong here until the exhaustive test below caught it.
+  static List<String> reorder(List<String> zones, int oldIndex, int newIndex) {
+    final next = List<String>.from(zones);
+    next.insert(newIndex, next.removeAt(oldIndex));
+    return next;
+  }
+
   static Map<String, ZoneListEntry> _byDay(List<ZoneListEntry> entries) {
     final indexed = <String, ZoneListEntry>{};
     for (final e in entries) {

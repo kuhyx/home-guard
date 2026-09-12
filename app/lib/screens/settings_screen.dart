@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:home_guard_app/screens/zones_screen.dart';
 import 'package:home_guard_app/services/firebase_backend.dart';
 import 'package:home_guard_app/services/google_sign_in_backend.dart';
 import 'package:sync_settings_ui/sync_settings_ui.dart';
@@ -18,6 +19,16 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          ListTile(
+            key: const Key('open-zones'),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Zones'),
+            subtitle: const Text('The places you clean, in rotation order'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push<void>(
+              MaterialPageRoute(builder: (_) => const ZonesScreen()),
+            ),
+          ),
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Sync settings'),

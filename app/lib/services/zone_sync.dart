@@ -63,6 +63,13 @@ class ZoneSync {
   final Future<SharedPreferences> Function() _prefs;
   final DateTime Function() _clock;
 
+  /// The local calendar day, formatted the way the PC formats `day`.
+  ///
+  /// Local, never UTC: `_gate.py` derives its day with `.astimezone()`, and a
+  /// rotation edit bucketed under a different date than the gate reads would
+  /// silently apply a day late.
+  String today() => Challenge.dayOf(_clock());
+
   Future<ZoneHistory?> _readCache() async {
     final store = await _prefs();
     final text = store.getString(kZoneCacheKey);
@@ -96,7 +103,7 @@ class ZoneSync {
   /// Never throws and never blocks on the network beyond one failed call --
   /// with the PC off this returns the cache, which is the whole point.
   Future<ZoneRead> load() async {
-    final today = Challenge.dayOf(_clock());
+    final today = this.today();
     final cached = await _readCache();
     final remote = await _fetchRemote();
     if (remote == null) {

@@ -202,4 +202,44 @@ void main() {
       expect(h.zonesForDay('2026-09-05'), ['older']);
     });
   });
+
+  group('reorder', () {
+    const base = ['a', 'b', 'c', 'd'];
+
+    test('moving an item down lands it at the requested index', () {
+      expect(ZoneHistory.reorder(base, 0, 2), ['b', 'c', 'a', 'd']);
+    });
+
+    test('moving an item up lands it at the requested index', () {
+      expect(ZoneHistory.reorder(base, 3, 1), ['a', 'd', 'b', 'c']);
+    });
+
+    test('moving to the end works', () {
+      expect(ZoneHistory.reorder(base, 0, 3), ['b', 'c', 'd', 'a']);
+    });
+
+    test('moving to the start works', () {
+      expect(ZoneHistory.reorder(base, 2, 0), ['c', 'a', 'b', 'd']);
+    });
+
+    test('a no-op move changes nothing', () {
+      expect(ZoneHistory.reorder(base, 1, 1), base);
+    });
+
+    test('never loses or duplicates a zone, for any index pair', () {
+      for (var from = 0; from < base.length; from++) {
+        for (var to = 0; to < base.length; to++) {
+          final out = ZoneHistory.reorder(base, from, to);
+          expect(out.length, base.length, reason: 'from=$from to=$to');
+          expect(out.toSet(), base.toSet(), reason: 'from=$from to=$to');
+        }
+      }
+    });
+
+    test('does not mutate its input', () {
+      final input = ['a', 'b', 'c'];
+      ZoneHistory.reorder(input, 0, 2);
+      expect(input, ['a', 'b', 'c']);
+    });
+  });
 }
