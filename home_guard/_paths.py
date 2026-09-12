@@ -31,6 +31,7 @@ class HomeGuardPaths:
     zone_list_path: Path | None = None
     escape_history_path: Path | None = None
     escape_key_file: Path | None = None
+    disarm_marker_path: Path | None = None
 
 
 def resolve_paths(paths: HomeGuardPaths | None) -> HomeGuardPaths:

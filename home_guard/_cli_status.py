@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from home_guard._cli_output import emit
+from home_guard._disarm import disarm_reason, is_disarmed
 from home_guard._gate import due_slots, gate_message
 
 if TYPE_CHECKING:
@@ -14,6 +15,11 @@ if TYPE_CHECKING:
 
 def cmd_status(_args: argparse.Namespace) -> int:
     """Print whether the gate is due, and for which zone."""
+    # Loud and first, then the real state anyway: "what would be due if I
+    # re-armed" stays a useful question while disarmed, so this annotates the
+    # status rather than replacing it.
+    if is_disarmed():
+        emit(f"home-guard: ENFORCEMENT DISARMED ({disarm_reason()})")
     now = datetime.now(tz=UTC).astimezone()
     slots = due_slots(now)
     emit(gate_message(now))

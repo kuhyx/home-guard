@@ -32,6 +32,13 @@ CLEAR_LOG_FILE: Final = DATA_DIR / "clear_log.json"
 PHOTOS_DIR: Final = DATA_DIR / "photos"
 ESCAPE_HATCH_HISTORY_FILE: Final = DATA_DIR / ".escape_hatch_history"
 
+# The disarm marker. The other half of this contract is
+# ``scripts/disarm_guard.sh``, which derives the identical path in bash --
+# ``tests/test_disarm.py`` asserts the two never drift apart. Not dot-prefixed
+# like the state files above: a disabled enforcement gate should be obvious in
+# a plain ``ls``, not hidden.
+DISARM_MARKER_FILE: Final = DATA_DIR / "DISARMED"
+
 # Shared with every sibling locker on purpose -- one key, one place, same as
 # leetcode-guard's own install.sh does (its ensure_hmac_key() checks this
 # exact path). The isolation a home-guard-only key would buy is illusory:

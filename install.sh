@@ -25,6 +25,9 @@ readonly HMAC_KEY="/etc/workout-locker/hmac.key"
 readonly FIREBASE_SESSION="${HOME}/.config/home_guard/firebase_auth.json"
 readonly SEED_SESSION="${HOME}/src/utils/crdt-sync/tool/seed_session.py"
 
+# shellcheck source=scripts/disarm_guard.sh
+source "$REPO_DIR/scripts/disarm_guard.sh"
+
 log() { printf 'install: %s\n' "$1" >&2; }
 fail() { printf 'install: FAILED -- %s\n' "$1" >&2; exit 1; }
 
@@ -88,6 +91,10 @@ require_firebase_session() {
 }
 
 install_units() {
+    # Redundant with the check in main() on purpose: this is the function a
+    # future refactor is most likely to call from somewhere new, and it is the
+    # one that clobbers systemd's /dev/null mask symlinks.
+    refuse_if_disarmed
     log "installing systemd user units into $UNIT_DIR"
     mkdir -p "$UNIT_DIR"
     install -m 644 "$REPO_DIR/home-guard-gate.service" "$UNIT_DIR/"
@@ -99,6 +106,10 @@ install_units() {
 }
 
 main() {
+    # In this repo "install" means "arm": the last thing this script does is
+    # enable a timer that can lock the screen. Refuse the whole run while
+    # disarmed rather than only the unit step.
+    refuse_if_disarmed
     install_package
     verify_imports
     ensure_hmac_key

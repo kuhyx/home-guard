@@ -74,12 +74,16 @@ def test_main_dispatches_to_status(
 ) -> None:
     import home_guard._cli_status as cli_status_module
 
+    monkeypatch.setattr(cli_status_module, "is_disarmed", lambda: False)
     monkeypatch.setattr(cli_status_module, "due_slots", lambda *_a, **_k: ())
     assert main(["status"]) == 0
     assert "nothing due" in capsys.readouterr().out
 
 
 def test_cmd_gate_arms_when_due(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Pinned explicitly: without it this reads the real
+    # ~/.local/share/home_guard/DISARMED and fails on a disarmed machine.
+    monkeypatch.setattr(cli_gate_module, "is_disarmed", lambda: False)
     monkeypatch.setattr(cli_gate_module, "due_slots", lambda _now: ("0800",))
     monkeypatch.setattr(cli_gate_module, "wait_for_x_server", lambda: True)
     constructed = {}
@@ -99,6 +103,7 @@ def test_cmd_gate_arms_when_due(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_cmd_gate_gives_up_without_an_x_server(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli_gate_module, "is_disarmed", lambda: False)
     monkeypatch.setattr(cli_gate_module, "due_slots", lambda _now: ("0800",))
     monkeypatch.setattr(cli_gate_module, "wait_for_x_server", lambda: False)
     args = build_parser().parse_args(["gate"])

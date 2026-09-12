@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from gatelock import wait_for_x_server
 
 from home_guard._cli_output import emit
+from home_guard._disarm import disarm_reason, is_disarmed
 from home_guard._gate import due_slots
 from home_guard._lock import HomeGuardGuard
 
@@ -25,6 +26,14 @@ def cmd_gate(args: argparse.Namespace) -> int:
     timeout here just means this tick gives up; the next scheduled tick
     tries again, so nothing is silently skipped forever.
     """
+    # Checked before due_slots, and deliberately not folded into it: both
+    # `status` and the MCP server call due_slots, and making "disarmed" read
+    # as "nothing due" would hide the disable from exactly the surfaces that
+    # should be announcing it. This is the single systemd entrypoint, so one
+    # check here covers every scheduled run.
+    if is_disarmed():
+        emit(f"home-guard: disarmed ({disarm_reason()}) -- not arming.")
+        return 0
     now = datetime.now(tz=UTC).astimezone()
     slots = due_slots(now)
     if not slots:
