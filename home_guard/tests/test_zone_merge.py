@@ -66,5 +66,29 @@ def test_duplicate_days_within_one_history_collapse_to_the_later() -> None:
     assert merged[0].zones == ("new",)
 
 
+def test_a_fresh_device_learns_past_entries_it_does_not_have() -> None:
+    """Filling a gap is not a rewrite.
+
+    Rejecting every past remote entry looks safer and is wrong: a freshly
+    installed phone starts empty and would be permanently unable to learn the
+    PC's history.
+    """
+    remote = (_e("2026-09-01", ("old",), "2026-09-01T08:00:00+00:00"),)
+    assert merge_histories((), remote, today=TODAY) == remote
+
+
+def test_a_past_gap_is_filled_without_touching_existing_past_entries() -> None:
+    local = (_e("2026-09-05", ("kept",), "2026-09-05T08:00:00+00:00"),)
+    remote = (
+        _e("2026-09-01", ("learned",), "2026-09-01T08:00:00+00:00"),
+        _e("2026-09-05", ("attempted-rewrite",), "2099-01-01T00:00:00+00:00"),
+    )
+    merged = merge_histories(local, remote, today=TODAY)
+    assert [(e.effective_from, e.zones) for e in merged] == [
+        ("2026-09-01", ("learned",)),
+        ("2026-09-05", ("kept",)),
+    ]
+
+
 def test_empty_inputs_merge_to_empty() -> None:
     assert merge_histories((), (), today=TODAY) == ()

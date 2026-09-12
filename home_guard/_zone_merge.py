@@ -11,15 +11,21 @@ Three rules, in order:
    (:func:`home_guard._zone_list.record_zone_list_change` resolves the same
    collision *positionally*, "the one being written wins", which is correct
    for a single writer and wrong for a merge.)
-3. A **remote** entry dated before today is dropped, and a local entry for a
-   past day is never replaced.
+3. A **remote** entry for a past day may not *replace* a local one -- but it
+   is accepted when the local history has no entry for that day at all.
 
 Rule 3 is the one that matters. ``.zone_list`` is forward-only precisely so
 that editing the rotation cannot retroactively change which zone an
 already-judged past slot was checked against (``docs/DOCS-zone-rotation.md``).
 A second writer -- buggy, stale-clocked, or just a phone whose timezone is
-wrong -- must not be able to void that invariant, and this preserves it
-without having to trust the phone at all.
+wrong -- must not be able to void that invariant.
+
+Note the "may not replace" rather than "is dropped". Rejecting every past
+remote entry outright looks safer and is actually wrong: a freshly installed
+phone, or a restored PC, starts with an empty history and would then be
+permanently unable to learn the other device's past edits. Filling a gap is
+not a rewrite -- only overwriting an entry that already exists locally is,
+and that is what stays forbidden.
 """
 
 from __future__ import annotations
@@ -62,10 +68,12 @@ def merge_histories(
     """
     merged = _by_day(local)
     for day, entry in _by_day(remote).items():
-        if day < today:
-            # Rule 3: the past is not the remote writer's to rewrite.
-            continue
         existing = merged.get(day)
+        if day < today and existing is not None:
+            # Rule 3: the past is not the remote writer's to rewrite. Note
+            # this is only skipped when a local entry actually exists --
+            # filling a gap is how a fresh device learns history at all.
+            continue
         if existing is None or entry.edited_at > existing.edited_at:
             merged[day] = entry
     return tuple(sorted(merged.values(), key=lambda e: e.effective_from))
