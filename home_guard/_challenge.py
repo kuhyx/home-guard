@@ -81,16 +81,26 @@ def verify_evidence(
     *,
     path: Path | None = None,
     key_file: Path | None = None,
+    allowed_zones: tuple[str, ...] | None = None,
 ) -> VerifyResult:
     """Check an evidence payload's echoed token against local state.
 
-    Checked against the zone **as recorded in the challenge at issue time**,
-    not a freshly-read current zone, so a rotation change mid-flight cannot
-    be exploited in either direction. Does not mutate state -- call
-    :func:`consume_challenge` separately once the caller has also done
-    whatever else an accept requires (log entry, cursor advance), so a crash
-    between verification and those side effects cannot silently consume a
-    challenge with nothing to show for it.
+    The zone is checked for **membership of the current rotation**, not
+    equality with the one the challenge was minted for. You may clean any
+    zone on the list, not only the one the PC happened to assign -- five
+    photos of a mirror must not be thrown away because the cursor was
+    pointing at the desk. A zone that is not on the list at all is still
+    rejected, so the rotation stays the single source of truth.
+
+    ``allowed_zones`` is passed in rather than read here so this function
+    stays pure and the caller controls which day's list applies.  With it
+    omitted the old exact-match rule applies, which is what every caller
+    that does not care about free choice still wants.
+
+    Does not mutate state -- call :func:`consume_challenge` separately once
+    the caller has also done whatever else an accept requires (log entry,
+    cursor advance), so a crash between verification and those side effects
+    cannot silently consume a challenge with nothing to show for it.
     """
     day = payload.get("day")
     slot = payload.get("slot")
@@ -103,7 +113,9 @@ def verify_evidence(
         return VerifyResult(accepted=False, reason="already_consumed", record=record)
     if payload.get("token") != record.token:
         return VerifyResult(accepted=False, reason="token_mismatch", record=record)
-    if payload.get("zone") != record.zone:
+    zone = payload.get("zone")
+    permitted = allowed_zones if allowed_zones is not None else (record.zone,)
+    if not isinstance(zone, str) or zone not in permitted:
         return VerifyResult(accepted=False, reason="zone_mismatch", record=record)
     return VerifyResult(accepted=True, reason=None, record=record)
 

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import freedays
 
 from home_guard import _gate as gate_module
+from home_guard._clear_photos import PhotoRef
 from home_guard._log import ClearEntryData, append_clear_entry
 from home_guard._zone_list import record_zone_list_change
 
@@ -35,8 +36,7 @@ def test_gate_is_due_false_after_valid_clear(tmp_path: Path) -> None:
             slot="0800",
             zone="desk",
             device="d",
-            photo_path="p",
-            photo_bytes=1,
+            photos=(PhotoRef(path="p", bytes_on_disk=1),),
             token=_ECHO,
         ),
         now=now,

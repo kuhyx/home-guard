@@ -5,11 +5,17 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+from home_guard._paths import HomeGuardPaths
 from home_guard._zone_cursor import advance, current_zone, load_cursor, seed_default
 from home_guard._zone_list import record_zone_list_change
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+
+def _p(cursor_path: Path, zone_list_path: Path) -> HomeGuardPaths:
+    """Shorthand for the two paths these tests always override together."""
+    return HomeGuardPaths(zone_cursor_path=cursor_path, zone_list_path=zone_list_path)
 
 
 def test_load_missing_cursor_defaults_to_zero(tmp_path: Path) -> None:
@@ -56,8 +62,7 @@ def test_current_zone_uses_default_zones(tmp_path: Path) -> None:
     )
     zone = current_zone(
         datetime(2026, 9, 6, tzinfo=UTC),
-        cursor_path=cursor_path,
-        zone_list_path=zone_list_path,
+        paths=_p(cursor_path, zone_list_path),
     )
     assert zone == "desk"
 
@@ -70,17 +75,31 @@ def test_advance_moves_to_next_zone_and_wraps(tmp_path: Path) -> None:
     )
     now = datetime(2026, 9, 6, tzinfo=UTC)
     advance(
-        now, "2026-09-06:0800", cursor_path=cursor_path, zone_list_path=zone_list_path
+        now,
+        "2026-09-06:0800",
+        paths=_p(cursor_path, zone_list_path),
     )
     assert (
-        current_zone(now, cursor_path=cursor_path, zone_list_path=zone_list_path)
+        current_zone(
+            now,
+            paths=HomeGuardPaths(
+                zone_cursor_path=cursor_path, zone_list_path=zone_list_path
+            ),
+        )
         == "kitchen"
     )
     advance(
-        now, "2026-09-07:0800", cursor_path=cursor_path, zone_list_path=zone_list_path
+        now,
+        "2026-09-07:0800",
+        paths=_p(cursor_path, zone_list_path),
     )
     assert (
-        current_zone(now, cursor_path=cursor_path, zone_list_path=zone_list_path)
+        current_zone(
+            now,
+            paths=HomeGuardPaths(
+                zone_cursor_path=cursor_path, zone_list_path=zone_list_path
+            ),
+        )
         == "desk"
     )
 
@@ -92,9 +111,17 @@ def test_advance_same_slot_key_is_idempotent(tmp_path: Path) -> None:
         ("desk", "kitchen"), effective_from="1970-01-01", path=zone_list_path
     )
     now = datetime(2026, 9, 6, tzinfo=UTC)
-    advance(now, "slot-a", cursor_path=cursor_path, zone_list_path=zone_list_path)
+    advance(
+        now,
+        "slot-a",
+        paths=_p(cursor_path, zone_list_path),
+    )
     first = load_cursor(cursor_path)
-    advance(now, "slot-a", cursor_path=cursor_path, zone_list_path=zone_list_path)
+    advance(
+        now,
+        "slot-a",
+        paths=_p(cursor_path, zone_list_path),
+    )
     second = load_cursor(cursor_path)
     assert first == second
 
@@ -106,11 +133,22 @@ def test_current_zone_modulo_survives_shrunk_list(tmp_path: Path) -> None:
         ("desk", "kitchen", "garage"), effective_from="1970-01-01", path=zone_list_path
     )
     now = datetime(2026, 9, 6, tzinfo=UTC)
-    advance(now, "s1", cursor_path=cursor_path, zone_list_path=zone_list_path)
-    advance(now, "s2", cursor_path=cursor_path, zone_list_path=zone_list_path)
+    advance(
+        now,
+        "s1",
+        paths=_p(cursor_path, zone_list_path),
+    )
+    advance(
+        now,
+        "s2",
+        paths=_p(cursor_path, zone_list_path),
+    )
     # cursor.index is now 2 ("garage"); shrink the list to 2 zones.
     record_zone_list_change(
         ("desk", "kitchen"), effective_from="2026-09-06", path=zone_list_path
     )
-    zone = current_zone(now, cursor_path=cursor_path, zone_list_path=zone_list_path)
+    zone = current_zone(
+        now,
+        paths=_p(cursor_path, zone_list_path),
+    )
     assert zone in ("desk", "kitchen")

@@ -60,16 +60,15 @@ def test_accept_full_pipeline_grants_and_rotates(tmp_path: Path) -> None:
     client = FakeRemoteStore()
     result = process_evidence(payload, now=now, client=client, paths=paths)
     assert result.accepted
-    assert result.photo_path is not None
-    assert result.photo_path.read_bytes() == _RAW_PHOTO
+    assert len(result.photo_paths) == 1
+    assert result.photo_paths[0].read_bytes() == _RAW_PHOTO
     assert cleared_slots_today(
         "2026-09-06", key_file=paths.log_key_file, log_path=paths.log_path
     ) == frozenset({"0800"})
     assert (
         current_zone(
             now,
-            cursor_path=paths.zone_cursor_path,
-            zone_list_path=paths.zone_list_path,
+            paths=paths,
         )
         == "kitchen"
     )
@@ -102,8 +101,7 @@ def test_reject_token_mismatch_has_no_side_effects(tmp_path: Path) -> None:
     assert (
         current_zone(
             now,
-            cursor_path=paths.zone_cursor_path,
-            zone_list_path=paths.zone_list_path,
+            paths=paths,
         )
         == "desk"
     )

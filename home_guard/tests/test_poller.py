@@ -14,8 +14,8 @@ from home_guard.tests.fake_tk_root import FakeTkRoot, ImmediateExecutor
 if TYPE_CHECKING:
     import pytest
 
-_ACCEPTED = AcceptResult(accepted=True, reason=None, photo_path=None)
-_REJECTED = AcceptResult(accepted=False, reason="token_mismatch", photo_path=None)
+_ACCEPTED = AcceptResult(accepted=True, reason=None)
+_REJECTED = AcceptResult(accepted=False, reason="token_mismatch")
 
 
 def test_poller_accepts_and_stops_scheduling(monkeypatch: pytest.MonkeyPatch) -> None:

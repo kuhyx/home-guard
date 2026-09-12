@@ -36,6 +36,8 @@ from home_guard._log_store import append_entry, read_raw_log
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from home_guard._clear_photos import PhotoRef
+
 _logger = logging.getLogger(__name__)
 
 EntryKind = Literal["clear", "escape"]
@@ -77,8 +79,9 @@ class ClearEntryData:
     slot: str
     zone: str
     device: str
-    photo_path: str
-    photo_bytes: int
+    photos: tuple[PhotoRef, ...]
+    """One or more photos. A clean is however many shots it took."""
+
     token: str
 
 
@@ -92,14 +95,18 @@ def append_clear_entry(
     """Sign and append a ``clear`` entry. Returns the stored entry dict."""
     reference = now if now is not None else datetime.now(tz=UTC)
     target_key = key_file if key_file is not None else _HMAC_KEY_FILE
+    # New entries carry `photos` and never the legacy `photo_path`/
+    # `photo_bytes`. Writing both would put two competing answers to "which
+    # photo is authoritative" inside a signed record; read either shape with
+    # _clear_photos.photos_of instead.
     payload = {
         "kind": "clear",
         "slot": data.slot,
         "zone": data.zone,
         "device": data.device,
         "logged_at": reference.isoformat(),
-        "photo_path": data.photo_path,
-        "photo_bytes": data.photo_bytes,
+        "photos": [{"path": p.path, "bytes": p.bytes_on_disk} for p in data.photos],
+        "photo_count": len(data.photos),
         "token": data.token,
     }
     entry = _signed_entry(payload, key_file=target_key)

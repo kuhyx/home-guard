@@ -74,11 +74,19 @@ SYNC_EVIDENCE_PATH: Final = f"{SYNC_PREFIX}/evidence/current.json"
 SYNC_ZONES_PATH: Final = f"{SYNC_PREFIX}/zones/current.json"
 
 # Decoded-photo size cap. The phone app re-encodes at a lower JPEG quality
-# to stay under this before ever uploading; _sync_evidence.save_evidence_photo
+# to stay under this before ever uploading; _evidence_photos.save_evidence_photos
 # enforces the same number server-side, so a stale app build or a stray
 # upload can never write an unbounded blob to disk regardless of what the
 # client claims to have capped.
 MAX_EVIDENCE_PHOTO_BYTES: Final = 600_000
+
+# There is deliberately NO cap on how many photos one clean may carry: five
+# fixtures at three angles each is an ordinary bathroom run, and a count cap
+# would be a product limit dressed up as a safety one. The per-photo cap
+# above still bounds any single write; what an unbounded count actually
+# risks is PHOTOS_DIR filling the disk, so that is where the real guard
+# goes -- refuse to write when free space would drop below this.
+MIN_FREE_DISK_BYTES: Final = 512 * 1024 * 1024
 
 POLL_INTERVAL_MS: Final = 5_000
 POLL_DRAIN_MS: Final = 200

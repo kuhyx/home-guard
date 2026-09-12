@@ -60,11 +60,7 @@ def prepare_slot(
     """
     resolved = resolve_paths(paths)
     day = now.strftime("%Y-%m-%d")
-    zone = current_zone(
-        now,
-        cursor_path=resolved.zone_cursor_path,
-        zone_list_path=resolved.zone_list_path,
-    )
+    zone = current_zone(now, paths=resolved)
     record = mint_challenge(
         day=day,
         slot=slot,

@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 import freedays
 
 from home_guard._log import cleared_slots_today
+from home_guard._paths import HomeGuardPaths
 from home_guard._slots import missing_slots
 from home_guard._zone_cursor import current_zone
 
@@ -74,6 +75,9 @@ def gate_message(
     """Human-facing message naming the zone, not just the slot."""
     reference = _now_local(now)
     zone = current_zone(
-        reference, cursor_path=zone_cursor_path, zone_list_path=zone_list_path
+        reference,
+        paths=HomeGuardPaths(
+            zone_cursor_path=zone_cursor_path, zone_list_path=zone_list_path
+        ),
     )
     return f"Clear the {zone} to unlock."

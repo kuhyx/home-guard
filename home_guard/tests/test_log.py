@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from gatelock.log_integrity import generate_hmac_key
 
+from home_guard._clear_photos import PhotoRef, photos_of
 from home_guard._log import (
     ClearEntryData,
     EscapeEntryData,
@@ -37,8 +38,7 @@ def test_clear_entry_with_no_key_counts_unsigned(tmp_path: Path) -> None:
             slot="0800",
             zone="desk",
             device="phone-1",
-            photo_path="photos/x.jpg",
-            photo_bytes=1234,
+            photos=(PhotoRef(path="photos/x.jpg", bytes_on_disk=1234),),
             token=_ECHO,
         ),
         now=now,
@@ -59,8 +59,7 @@ def test_clear_entry_is_signed_when_key_exists(tmp_path: Path) -> None:
             slot="0800",
             zone="desk",
             device="phone-1",
-            photo_path="photos/x.jpg",
-            photo_bytes=1234,
+            photos=(PhotoRef(path="photos/x.jpg", bytes_on_disk=1234),),
             token=_ECHO,
         ),
         now=now,
@@ -83,8 +82,7 @@ def test_tampered_clear_entry_does_not_count(tmp_path: Path) -> None:
             slot="0800",
             zone="desk",
             device="phone-1",
-            photo_path="photos/x.jpg",
-            photo_bytes=1234,
+            photos=(PhotoRef(path="photos/x.jpg", bytes_on_disk=1234),),
             token=_ECHO,
         ),
         now=now,
@@ -152,8 +150,7 @@ def test_recent_entries_newest_first_across_days(tmp_path: Path) -> None:
             slot="0800",
             zone="desk",
             device="d",
-            photo_path="p1",
-            photo_bytes=1,
+            photos=(PhotoRef(path="p1", bytes_on_disk=1),),
             token=_ECHO_1,
         ),
         now=datetime(2026, 9, 5, 9, tzinfo=UTC),
@@ -165,8 +162,7 @@ def test_recent_entries_newest_first_across_days(tmp_path: Path) -> None:
             slot="0800",
             zone="desk",
             device="d",
-            photo_path="p2",
-            photo_bytes=1,
+            photos=(PhotoRef(path="p2", bytes_on_disk=1),),
             token=_ECHO_2,
         ),
         now=datetime(2026, 9, 6, 9, tzinfo=UTC),
@@ -175,7 +171,7 @@ def test_recent_entries_newest_first_across_days(tmp_path: Path) -> None:
     )
     entries = recent_entries(limit=1, log_path=log_path)
     assert len(entries) == 1
-    assert entries[0]["photo_path"] == "p2"
+    assert photos_of(entries[0])[0].path == "p2"
 
 
 def test_read_raw_log_missing_file_returns_empty(tmp_path: Path) -> None:

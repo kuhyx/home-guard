@@ -125,6 +125,11 @@ def test_grant_escape_does_not_rotate_zone(tmp_path: Path) -> None:
         paths=HomeGuardPaths(log_path=tmp_path / "clear_log.json"),
     )
     assert (
-        current_zone(now, cursor_path=cursor_path, zone_list_path=zone_list_path)
+        current_zone(
+            now,
+            paths=HomeGuardPaths(
+                zone_cursor_path=cursor_path, zone_list_path=zone_list_path
+            ),
+        )
         == "desk"
     )

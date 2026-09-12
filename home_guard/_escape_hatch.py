@@ -79,7 +79,12 @@ def grant_escape(
     (budget exhausted, invalid draft, or the history could not be saved), or
     ``None`` on success.
     """
-    reference = now if now is not None else datetime.now(tz=UTC)
+    # Local, never UTC. _gate.py derives its day with .astimezone(), and the
+    # log buckets by whatever datetime it is handed, so a UTC-derived day
+    # files a post-local-midnight grant under yesterday -- where nothing that
+    # grants a slot ever reads. Latent only because the enforcement window
+    # keeps the two dates equal for most of the day.
+    reference = (now if now is not None else datetime.now(tz=UTC)).astimezone()
     today = reference.strftime("%Y-%m-%d")
     # Same clock for the budget check as for the record: an earlier draft
     # checked the windows against the real calendar while recording under

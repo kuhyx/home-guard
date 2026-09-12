@@ -13,11 +13,14 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
 from home_guard._challenge import consume_challenge, verify_evidence
+from home_guard._clear_photos import PhotoRef
+from home_guard._evidence_photos import save_evidence_photos
 from home_guard._log import ClearEntryData, append_clear_entry
 from home_guard._paths import resolve_paths
 from home_guard._sync_challenge import publish_challenge
-from home_guard._sync_evidence import drain_evidence, save_evidence_photo
+from home_guard._sync_evidence import drain_evidence
 from home_guard._zone_cursor import advance
+from home_guard._zone_list import load_zone_list_entries, zone_list_for_day
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -41,7 +44,33 @@ class AcceptResult:
 
     accepted: bool
     reason: AcceptOutcome | None
-    photo_path: Path | None
+    photo_paths: tuple[Path, ...] = ()
+
+
+def _local(moment: datetime) -> datetime:
+    """Local time, so every day string in this module matches the gate's."""
+    return moment.astimezone()
+
+
+def _captured_at(payload: dict[str, Any], fallback: datetime) -> datetime:
+    """When the phone says the photos were taken, clamped to sanity.
+
+    A self-reported timestamp is only trusted backwards: it may name an
+    earlier day (a session queued while the PC was off), but never a later
+    one, which would let a phone with a fast clock pre-satisfy a slot that
+    has not happened yet.
+    """
+    raw = payload.get("captured_at")
+    if not isinstance(raw, str) or not raw:
+        return fallback
+    try:
+        parsed = datetime.fromisoformat(raw)
+    except ValueError:
+        return fallback
+    if parsed.tzinfo is None:
+        return fallback
+    local = _local(parsed)
+    return min(local, fallback)
 
 
 def process_evidence(
@@ -57,39 +86,60 @@ def process_evidence(
     A rejected payload has no side effects at all -- it is left in place at
     its fixed RTDB path so a legitimate retry can simply overwrite it.
     """
-    reference = now if now is not None else datetime.now(tz=UTC)
+    reference = _local(now if now is not None else datetime.now(tz=UTC))
     resolved = resolve_paths(paths)
+
+    # The day the cleaning HAPPENED, which for a session queued offline is
+    # not today. Local, never UTC: _gate.py derives its day with
+    # .astimezone(), and _log.py buckets by whatever datetime it is handed,
+    # so a UTC-derived day silently files a 00:30 clean under yesterday and
+    # the gate never sees it.
+    captured = _captured_at(payload, reference)
+    day = captured.strftime("%Y-%m-%d")
+
+    entries = load_zone_list_entries(resolved.zone_list_path)
     verification = verify_evidence(
-        payload, path=resolved.challenge_path, key_file=resolved.challenge_key_file
+        payload,
+        path=resolved.challenge_path,
+        key_file=resolved.challenge_key_file,
+        allowed_zones=zone_list_for_day(entries, day),
     )
     if not verification.accepted or verification.record is None:
-        return AcceptResult(accepted=False, reason=verification.reason, photo_path=None)
+        return AcceptResult(accepted=False, reason=verification.reason)
     record = verification.record
 
-    photo_path = save_evidence_photo(payload, photos_dir=resolved.photos_dir)
-    if photo_path is None:
-        return AcceptResult(accepted=False, reason="photo_invalid", photo_path=None)
+    photo_paths = save_evidence_photos(payload, photos_dir=resolved.photos_dir)
+    if not photo_paths:
+        return AcceptResult(accepted=False, reason="photo_invalid")
 
     device = payload.get("device_id")
-    photo_bytes = photo_path.stat().st_size
+    cleaned_zone = payload.get("zone")
     append_clear_entry(
         ClearEntryData(
             slot=record.slot,
-            zone=record.zone,
+            zone=cleaned_zone if isinstance(cleaned_zone, str) else record.zone,
             device=device if isinstance(device, str) else "unknown",
-            photo_path=str(photo_path),
-            photo_bytes=photo_bytes,
+            photos=tuple(
+                PhotoRef(path=str(p), bytes_on_disk=p.stat().st_size)
+                for p in photo_paths
+            ),
             token=record.token,
         ),
-        now=reference,
+        # Stamped into the day it was captured, not the day it was drained.
+        # cleared_slots_today() only ever reads TODAY's bucket, so a clean
+        # done today unlocks today, and one queued from yesterday lands in
+        # yesterday's bucket: the record and the rotation advance are kept,
+        # but it grants nothing now. That is the whole backdating rule, and
+        # it costs no extra code.
+        now=captured,
         key_file=resolved.log_key_file,
         log_path=resolved.log_path,
     )
     advance(
-        reference,
+        captured,
         f"{record.day}:{record.slot}",
-        cursor_path=resolved.zone_cursor_path,
-        zone_list_path=resolved.zone_list_path,
+        cleaned_zone=cleaned_zone if isinstance(cleaned_zone, str) else None,
+        paths=resolved,
     )
     consume_challenge(
         record, path=resolved.challenge_path, key_file=resolved.challenge_key_file
@@ -103,4 +153,4 @@ def process_evidence(
         # app sat in "unconfirmed" for the rest of the day.
         publish_challenge(replace(record, consumed=True), client=client)
         drain_evidence(client=client)
-    return AcceptResult(accepted=True, reason=None, photo_path=photo_path)
+    return AcceptResult(accepted=True, reason=None, photo_paths=photo_paths)

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from home_guard._clear_photos import PhotoRef
 from home_guard._log import ClearEntryData, append_clear_entry
 import home_guard._log_store as log_store_module
 from home_guard._mcp import (
@@ -69,8 +70,7 @@ def test_get_clear_history_returns_recent_entries(
             slot="0800",
             zone="desk",
             device="phone-1",
-            photo_path="photos/x.jpg",
-            photo_bytes=10,
+            photos=(PhotoRef(path="photos/x.jpg", bytes_on_disk=10),),
             token=_ECHO,
         ),
         now=datetime(2026, 9, 6, 9, tzinfo=UTC),
