@@ -21,13 +21,18 @@ class _BrokenRemote extends MemRemote {
       throw RemoteSyncError('offline');
 }
 
-MemRemote _withChallenge({String day = _today, bool consumed = false}) =>
-    MemRemote()
+MemRemote _withChallenge({
+  String day = _today,
+  bool consumed = false,
+  bool draining = false,
+  String token = 'tok',
+}) =>
+    (draining ? _DrainingRemote() : MemRemote())
       ..files[kChallengePath] = jsonEncode({
         'day': day,
         'slot': '0800',
         'zone': 'desk',
-        'token': 'tok',
+        'token': token,
         'issued_at': 'T',
         'consumed': consumed,
       });
@@ -38,7 +43,27 @@ UploadQueue _queue(SessionStore store, RemoteStore? remote) => UploadQueue(
   deviceId: 'dev-1',
   clock: () => _now,
   encode: (raw) => EncodedPhoto(bytes: raw, base64: base64Encode(raw)),
+  confirmDelay: Duration.zero,
 );
+
+/// A remote that accepts the write and then drains, like a running PC.
+class _DrainingRemote extends MemRemote {
+  /// What was written before the drain, so tests can still assert on it.
+  String? lastEvidence;
+
+  @override
+  Future<void> putFileText(
+    String path,
+    String text, {
+    required String message,
+  }) async {
+    await super.putFileText(path, text, message: message);
+    if (path == kEvidencePath) {
+      lastEvidence = text;
+      files[path] = '{}';
+    }
+  }
+}
 
 Future<SessionStore> _storeWith(
   FakeSessionFiles files, {
@@ -72,13 +97,12 @@ void main() {
     // The session had no token -- the PC mints those and was not there when
     // the cleaning happened. Binding on drain is the only way an offline
     // clean can ever be credited.
-    final remote = _withChallenge();
+    final remote = _withChallenge(draining: true) as _DrainingRemote;
     final store = await _storeWith(FakeSessionFiles(), photos: 3);
     final report = await _queue(store, remote).drain();
 
     expect(report.uploaded, 1);
-    final payload =
-        jsonDecode(remote.files[kEvidencePath]!) as Map<String, Object?>;
+    final payload = jsonDecode(remote.lastEvidence!) as Map<String, Object?>;
     expect(payload['token'], 'tok');
     expect(payload['zone'], 'mirror');
     expect((payload['photos']! as List).length, 3);
@@ -138,10 +162,50 @@ void main() {
     expect(report.stillQueued, 1);
   });
 
+  test('an upload the PC never takes is NOT shown as accepted', () async {
+    // "The write succeeded" is not "the PC took it": a rejected payload sits
+    // on the node untouched. A green tick it did not earn would be reporting
+    // the appearance of an outcome.
+    final remote = _withChallenge();
+    final store = await _storeWith(FakeSessionFiles());
+    final report = await _queue(store, remote).drain();
+
+    expect(report.uploaded, 0);
+    expect(report.stillQueued, 1);
+    final session = (await store.load()).single;
+    expect(session.status, SessionStatus.queued);
+    expect(session.detail, contains('waiting for the PC'));
+    // It remembers what it was sent against, so a later drain can settle it.
+    expect(session.token, 'tok');
+  });
+
+  test('a consumed challenge settles a session we never saw drain', () async {
+    final store = await _storeWith(FakeSessionFiles());
+    // First pass uploads but never sees the drain.
+    await _queue(store, _withChallenge()).drain();
+    expect((await store.load()).single.status, SessionStatus.queued);
+
+    // The PC republishes the record as consumed once it accepts.
+    final report = await _queue(store, _withChallenge(consumed: true)).drain();
+    expect(report.uploaded, 1);
+    expect((await store.load()).single.status, SessionStatus.accepted);
+  });
+
+  test('a consumed challenge for a DIFFERENT token settles nothing', () async {
+    final store = await _storeWith(FakeSessionFiles());
+    await _queue(store, _withChallenge()).drain();
+    final report = await _queue(
+      store,
+      _withChallenge(consumed: true, token: 'other'),
+    ).drain();
+    expect(report.uploaded, 0);
+    expect((await store.load()).single.status, SessionStatus.queued);
+  });
+
   test('an unencodable photo is skipped, not fatal', () async {
     final files = FakeSessionFiles();
     final store = await _storeWith(files, photos: 2);
-    final remote = _withChallenge();
+    final remote = _withChallenge(draining: true) as _DrainingRemote;
     var calls = 0;
     final queue = UploadQueue(
       store: store,
@@ -153,10 +217,10 @@ void main() {
         if (calls == 1) throw const FormatException('bad');
         return EncodedPhoto(bytes: raw, base64: base64Encode(raw));
       },
+      confirmDelay: Duration.zero,
     );
     expect((await queue.drain()).uploaded, 1);
-    final payload =
-        jsonDecode(remote.files[kEvidencePath]!) as Map<String, Object?>;
+    final payload = jsonDecode(remote.lastEvidence!) as Map<String, Object?>;
     expect((payload['photos']! as List).length, 1);
   });
 

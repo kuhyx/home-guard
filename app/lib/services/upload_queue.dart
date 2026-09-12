@@ -44,6 +44,8 @@ class UploadQueue {
     required this.deviceId,
     DateTime Function()? clock,
     EncodedPhoto Function(Uint8List raw)? encode,
+    this.confirmAttempts = 5,
+    this.confirmDelay = const Duration(seconds: 2),
   }) : _clock = clock ?? DateTime.now,
        _encode = encode ?? encodePhotoUnderCap;
 
@@ -55,6 +57,12 @@ class UploadQueue {
 
   /// This install's id.
   final String deviceId;
+
+  /// How many times to ask the PC whether it actually took the upload.
+  final int confirmAttempts;
+
+  /// Gap between those asks.
+  final Duration confirmDelay;
 
   final DateTime Function() _clock;
   final EncodedPhoto Function(Uint8List) _encode;
@@ -72,6 +80,17 @@ class UploadQueue {
     var waiting = 0;
     var kept = 0;
     for (final session in queued) {
+      // A session we already uploaded, whose token the PC has since marked
+      // consumed, WAS taken -- we just never saw the drain. Settle it now
+      // rather than re-uploading into an `already_consumed` rejection.
+      if (session.token != null &&
+          challenge != null &&
+          challenge.token == session.token &&
+          challenge.consumed) {
+        await store.put(session.copyWith(status: SessionStatus.accepted));
+        uploaded++;
+        continue;
+      }
       if (session.day != today) {
         await store.put(
           session.copyWith(
@@ -122,7 +141,29 @@ class UploadQueue {
       capturedAt: DateTime.tryParse(session.capturedAt),
     );
     if (result.outcome != SyncOutcome.ok) return false;
-    await store.put(session.copyWith(status: SessionStatus.accepted));
-    return true;
+
+    // Record what it was sent against BEFORE confirming, so a later drain
+    // can still settle it if we die waiting.
+    final sent = session.copyWith(
+      slot: challenge.slot,
+      token: challenge.token,
+      detail: 'Uploaded — waiting for the PC to confirm.',
+    );
+    await store.put(sent);
+
+    // "The write succeeded" is not "the PC took it": a payload the PC
+    // rejects sits on the node untouched. Only the drain says accepted, so
+    // anything less stays queued and is retried rather than being shown a
+    // green tick it did not earn.
+    for (var i = 0; i < confirmAttempts; i++) {
+      await Future<void>.delayed(confirmDelay);
+      if (await sync.evidenceDrained() ?? false) {
+        await store.put(
+          sent.copyWith(status: SessionStatus.accepted, detail: ''),
+        );
+        return true;
+      }
+    }
+    return false;
   }
 }

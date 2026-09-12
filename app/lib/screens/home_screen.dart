@@ -30,6 +30,7 @@ class HomeScreen extends StatefulWidget {
     this.capture,
     this.encode,
     this.clock,
+    this.confirmDelay = const Duration(seconds: 2),
   });
 
   /// This install's persisted device id, stamped on every upload.
@@ -52,6 +53,9 @@ class HomeScreen extends StatefulWidget {
 
   /// Clock; defaults to [DateTime.now].
   final DateTime Function()? clock;
+
+  /// Gap between asking the PC whether it took an upload. Zero in tests.
+  final Duration confirmDelay;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -156,7 +160,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _session = null;
       if (report.uploaded > 0) {
         _phase = HomePhase.accepted;
-        _detail = 'The PC recorded ${session.photoCount} photo'
+        _detail =
+            'The PC recorded ${session.photoCount} photo'
             '${session.photoCount == 1 ? '' : 's'} of ${session.zone}.';
       } else {
         _phase = HomePhase.savedOffline;
@@ -172,6 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
       deviceId: widget.deviceId,
       clock: _clock,
       encode: _encode,
+      confirmDelay: widget.confirmDelay,
     );
     return await queue.drain();
   }
