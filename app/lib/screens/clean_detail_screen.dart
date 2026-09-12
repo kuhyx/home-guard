@@ -111,6 +111,15 @@ class _CleanDetailScreenState extends State<CleanDetailScreen> {
           Expanded(child: _grid()),
           if (_busy) const LinearProgressIndicator(),
           Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            child: Text(
+              _addNote(),
+              key: const Key('add-note'),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+          Padding(
             padding: const EdgeInsets.all(16),
             child: FilledButton.icon(
               key: const Key('add-photo'),
@@ -124,6 +133,24 @@ class _CleanDetailScreenState extends State<CleanDetailScreen> {
       ),
     );
   }
+
+  /// What adding a photo here will and will not do.
+  ///
+  /// Said BEFORE the tap, not after: once the PC has recorded a clean its
+  /// entry is signed and closed, so a photo added afterwards lives only on
+  /// this phone. Letting the counts silently diverge would leave you with a
+  /// clean that says 6 here and 5 on the PC and no way to know why.
+  String _addNote() => switch (_session.status) {
+    SessionStatus.accepted =>
+      "The PC's record of this clean is closed — new photos stay on this "
+          'phone.',
+    SessionStatus.queued =>
+      'This clean has not reached the PC yet, so new photos go with it.',
+    SessionStatus.selfLogged => 'Your own record; it never goes to the PC.',
+    SessionStatus.rejected =>
+      'The PC did not record this clean; new photos stay on this phone.',
+    SessionStatus.draft => '',
+  };
 
   Widget _grid() {
     if (_session.photos.isEmpty) {

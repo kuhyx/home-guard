@@ -18,13 +18,16 @@ final _png = Uint8List.fromList([
   174, 66, 96, 130,
 ]);
 
-CleanSession _session({List<SessionPhoto> photos = const []}) => CleanSession(
+CleanSession _session({
+  List<SessionPhoto> photos = const [],
+  SessionStatus status = SessionStatus.accepted,
+}) => CleanSession(
   id: 's1',
   zone: 'mirror',
   capturedAt: '2026-09-12T19:00:00Z',
   day: '2026-09-12',
   photos: photos,
-  status: SessionStatus.accepted,
+  status: status,
 );
 
 Future<SessionStore> _pump(
@@ -121,10 +124,7 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('add-photo')));
     await tester.pumpAndSettle();
-    expect((await store.load()).single.photoNames, [
-      's1-05.jpg',
-      's1-06.jpg',
-    ]);
+    expect((await store.load()).single.photoNames, ['s1-05.jpg', 's1-06.jpg']);
   });
 
   testWidgets('cancelling the camera changes nothing', (tester) async {
@@ -144,6 +144,41 @@ void main() {
     await _pump(tester, session: _session(), files: FakeSessionFiles());
     expect(find.byKey(const Key('detail-empty')), findsOneWidget);
     expect(find.textContaining('record of it stays'), findsOneWidget);
+  });
+
+  testWidgets('it says where an added photo will go, before you tap', (
+    tester,
+  ) async {
+    // A signed PC entry is closed, so a photo added afterwards is phone-only.
+    // Letting the counts diverge silently would leave a clean reading 6 here
+    // and 5 on the PC with no way to know why.
+    await _pump(tester, session: _session(), files: FakeSessionFiles());
+    expect(
+      find.textContaining("PC's record of this clean is closed"),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('a clean still on its way to the PC says photos go with it', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      session: _session(status: SessionStatus.queued),
+      files: FakeSessionFiles(),
+    );
+    expect(find.textContaining('new photos go with it'), findsOneWidget);
+  });
+
+  testWidgets('a self-logged clean says it never goes to the PC', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      session: _session(status: SessionStatus.selfLogged),
+      files: FakeSessionFiles(),
+    );
+    expect(find.textContaining('never goes to the PC'), findsOneWidget);
   });
 
   testWidgets('there is no gallery affordance on the detail screen', (
