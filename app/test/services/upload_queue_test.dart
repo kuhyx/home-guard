@@ -77,7 +77,7 @@ Future<SessionStore> _storeWith(
     zone: zone,
     capturedAt: '${day}T19:00:00Z',
     day: day,
-    photoNames: const [],
+    photos: const [],
     status: SessionStatus.draft,
   );
   for (var i = 0; i < photos; i++) {
@@ -236,7 +236,7 @@ void main() {
         zone: 'desk',
         capturedAt: '${_today}T10:00:00Z',
         day: _today,
-        photoNames: [],
+        photos: [],
         status: SessionStatus.draft,
       ),
     );

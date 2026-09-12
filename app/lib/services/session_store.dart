@@ -12,6 +12,13 @@ import 'dart:typed_data';
 import 'package:home_guard_app/models/clean_session.dart';
 import 'package:home_guard_app/services/session_files.dart';
 
+/// How much room the app's photos may take on the phone.
+///
+/// Generous on purpose: photos per clean are unbounded by design, and the
+/// point of keeping them is being able to look at them later. At roughly
+/// 200 KB a shot this is thousands of photos before anything is freed.
+const int kPhotoStorageBudgetBytes = 1500 * 1024 * 1024;
+
 /// Reads and writes [CleanSession]s.
 class SessionStore {
   /// Creates a store over [files].
@@ -59,13 +66,37 @@ class SessionStore {
   ///
   /// The bytes are written before the manifest, so a crash between the two
   /// leaves an unreferenced file rather than a manifest pointing at nothing.
+  ///
+  /// The name is derived from a counter that never reuses an index, even
+  /// after a photo is pruned, so appending to an old clean cannot overwrite
+  /// a surviving file.
   Future<CleanSession> addPhoto(CleanSession session, Uint8List bytes) async {
-    final index = session.photoCount.toString().padLeft(2, '0');
-    final name = '${session.id}-$index.jpg';
+    final name = '${session.id}-${_nextIndex(session)}.jpg';
     await files.writePhoto(name, bytes);
-    final updated = session.copyWith(photoNames: [...session.photoNames, name]);
+    final updated = session.copyWith(
+      photos: [
+        ...session.photos,
+        SessionPhoto(name: name, bytes: bytes.length),
+      ],
+    );
     await put(updated);
     return updated;
+  }
+
+  static String _nextIndex(CleanSession session) {
+    var highest = -1;
+    for (final photo in session.photos) {
+      final digits = photo.name.split('-').last.split('.').first;
+      final parsed = int.tryParse(digits);
+      if (parsed != null && parsed > highest) highest = parsed;
+    }
+    return (highest + 1).toString().padLeft(2, '0');
+  }
+
+  /// Total bytes every stored photo occupies.
+  Future<int> totalBytes() async {
+    final sessions = await load();
+    return sessions.fold<int>(0, (sum, s) => sum + s.totalBytes);
   }
 
   /// Reads one photo's bytes.
@@ -89,36 +120,40 @@ class SessionStore {
     await _save(sessions.where((s) => s.id != id).toList());
   }
 
-  /// Deletes photo files for accepted sessions older than [keepDays],
-  /// keeping the manifest so the history still shows the clean happened.
+  /// Frees photo files until total storage fits [budgetBytes].
   ///
-  /// Never touches a queued session: that would discard un-credited work,
-  /// which is the exact failure this store exists to prevent.
-  Future<void> prune({required String today, int keepDays = 30}) async {
+  /// Budget-driven rather than age-driven: the point of keeping photos is
+  /// being able to look at them later, and a fixed 30-day window silently
+  /// breaks exactly that, one month after you start relying on it. Oldest
+  /// accepted cleans are freed first, and the manifest is kept so the record
+  /// of the clean survives its images.
+  ///
+  /// Never touches a session that has not reached the PC. Discarding
+  /// un-credited work is the failure this store exists to prevent, so an
+  /// unsynced clean is never freed no matter how tight storage is.
+  Future<void> prune({required int budgetBytes}) async {
     final sessions = await load();
-    final cutoff = _minusDays(today, keepDays);
-    var changed = false;
-    final kept = <CleanSession>[];
-    for (final session in sessions) {
-      if (session.status == SessionStatus.accepted &&
-          session.day.compareTo(cutoff) < 0 &&
-          session.photoNames.isNotEmpty) {
-        for (final name in session.photoNames) {
-          await files.deletePhoto(name);
-        }
-        kept.add(session.copyWith(photoNames: []));
-        changed = true;
-      } else {
-        kept.add(session);
-      }
-    }
-    if (changed) await _save(kept);
-  }
+    var total = sessions.fold<int>(0, (sum, s) => sum + s.totalBytes);
+    if (total <= budgetBytes) return;
 
-  static String _minusDays(String day, int days) {
-    final parsed = DateTime.parse(day).subtract(Duration(days: days));
-    final m = parsed.month.toString().padLeft(2, '0');
-    final d = parsed.day.toString().padLeft(2, '0');
-    return '${parsed.year}-$m-$d';
+    // Oldest first: the most recent cleans are the ones worth looking at.
+    final candidates = sessions.reversed
+        .where((s) => s.status == SessionStatus.accepted && s.photos.isNotEmpty)
+        .toList();
+
+    final freed = <String>{};
+    for (final session in candidates) {
+      if (total <= budgetBytes) break;
+      for (final photo in session.photos) {
+        await files.deletePhoto(photo.name);
+        total -= photo.bytes;
+      }
+      freed.add(session.id);
+    }
+    if (freed.isEmpty) return;
+    await _save([
+      for (final s in sessions)
+        if (freed.contains(s.id)) s.copyWith(photos: []) else s,
+    ]);
   }
 }

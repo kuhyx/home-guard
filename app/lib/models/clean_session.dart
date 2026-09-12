@@ -1,6 +1,41 @@
 /// One clean: a zone, and however many photos it took.
 library;
 
+/// One stored photo and how big it is.
+///
+/// The size lives in the manifest rather than being stat-ed on demand so
+/// pruning is a pure decision over data already in hand, with no filesystem
+/// walk on a list that is deliberately unbounded.
+class SessionPhoto {
+  /// Creates a photo record.
+  const SessionPhoto({required this.name, required this.bytes});
+
+  /// Filename within the sessions directory.
+  final String name;
+
+  /// Size on disk.
+  final int bytes;
+
+  /// Parses either shape. A bare string is the ORIGINAL manifest form and
+  /// must keep working: sessions written before sizes existed are already on
+  /// phones, and a clean the user has not synced yet must not be lost to a
+  /// schema change. Unknown size reads as 0, which only makes pruning
+  /// slightly less accurate for those rows.
+  static SessionPhoto? fromJson(Object? json) {
+    if (json is String) {
+      return json.isEmpty ? null : SessionPhoto(name: json, bytes: 0);
+    }
+    if (json is! Map<String, Object?>) return null;
+    final name = json['name'];
+    if (name is! String || name.isEmpty) return null;
+    final bytes = json['bytes'];
+    return SessionPhoto(name: name, bytes: bytes is int ? bytes : 0);
+  }
+
+  /// Serialises to the current shape.
+  Map<String, Object?> toJson() => {'name': name, 'bytes': bytes};
+}
+
 /// Where a session is in its life.
 enum SessionStatus {
   /// Being photographed right now.
@@ -15,6 +50,14 @@ enum SessionStatus {
   /// The PC refused it. Kept, not dropped, so it stays visible in history
   /// rather than silently vanishing along with the work it records.
   rejected,
+
+  /// Recorded by you after the fact, never sent to the PC.
+  ///
+  /// A backdated clean cannot be credited without consuming today's
+  /// single-use token for work that belongs in a past log bucket, which
+  /// would leave today both uncredited and unclearable. So it stays on the
+  /// phone as an honest record of something you did.
+  selfLogged,
 }
 
 /// A clean, stored on the phone first and uploaded second.
@@ -29,7 +72,7 @@ class CleanSession {
     required this.zone,
     required this.capturedAt,
     required this.day,
-    required this.photoNames,
+    required this.photos,
     required this.status,
     this.slot,
     this.token,
@@ -61,7 +104,9 @@ class CleanSession {
       zone: zone,
       capturedAt: capturedAt,
       day: day,
-      photoNames: photos.whereType<String>().toList(),
+      photos: [
+        for (final raw in photos) ?SessionPhoto.fromJson(raw),
+      ],
       status: SessionStatus.values.firstWhere(
         (s) => s.name == status,
         orElse: () => SessionStatus.queued,
@@ -87,8 +132,14 @@ class CleanSession {
   /// the day it happened to drain the node.
   final String day;
 
-  /// Photo filenames, in capture order. Unbounded on purpose.
-  final List<String> photoNames;
+  /// Photos, in capture order. Unbounded on purpose.
+  final List<SessionPhoto> photos;
+
+  /// Just the filenames, for callers that do not care about sizes.
+  List<String> get photoNames => [for (final p in photos) p.name];
+
+  /// Total bytes this clean occupies on the phone.
+  int get totalBytes => photos.fold(0, (sum, p) => sum + p.bytes);
 
   /// Where it is in its life.
   final SessionStatus status;
@@ -105,7 +156,7 @@ class CleanSession {
   final String detail;
 
   /// How many photos this clean took.
-  int get photoCount => photoNames.length;
+  int get photoCount => photos.length;
 
   /// Serialises the manifest.
   Map<String, Object?> toJson() => {
@@ -113,7 +164,7 @@ class CleanSession {
     'zone': zone,
     'captured_at': capturedAt,
     'day': day,
-    'photos': photoNames,
+    'photos': [for (final p in photos) p.toJson()],
     'status': status.name,
     if (slot != null) 'slot': slot,
     if (token != null) 'token': token,
@@ -122,7 +173,7 @@ class CleanSession {
 
   /// Returns a copy with the given fields replaced.
   CleanSession copyWith({
-    List<String>? photoNames,
+    List<SessionPhoto>? photos,
     SessionStatus? status,
     String? slot,
     String? token,
@@ -132,7 +183,7 @@ class CleanSession {
     zone: zone,
     capturedAt: capturedAt,
     day: day,
-    photoNames: photoNames ?? this.photoNames,
+    photos: photos ?? this.photos,
     status: status ?? this.status,
     slot: slot ?? this.slot,
     token: token ?? this.token,

@@ -112,6 +112,10 @@ class _HomeScreenState extends State<HomeScreen> {
       };
     });
     unawaited(_drain());
+    // Free old images only once storage is actually tight. Age-based pruning
+    // would silently break browsing your own history a month in, which is
+    // the whole reason the detail screen exists.
+    unawaited(widget.store.prune(budgetBytes: kPhotoStorageBudgetBytes));
   }
 
   Future<void> _takePhoto() async {
@@ -149,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
       zone: zone,
       capturedAt: now.toUtc().toIso8601String(),
       day: Challenge.dayOf(now),
-      photoNames: const [],
+      photos: const [],
       status: SessionStatus.draft,
     );
   }

@@ -60,6 +60,36 @@ Future<(SessionStore, FakeSessionFiles)> _pump(
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  testWidgets('a past clean opens its photos', (tester) async {
+    await _pump(tester, remote: _BrokenRemote());
+    await tester.tap(find.byKey(const Key('take-photo')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('finish')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('open-history')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('desk'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('detail-subtitle')), findsOneWidget);
+    expect(find.byKey(const Key('add-photo')), findsOneWidget);
+  });
+
+  testWidgets('history offers logging a past clean', (tester) async {
+    await _pump(tester, remote: _BrokenRemote());
+    await tester.tap(find.byKey(const Key('open-history')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('log-a-clean')), findsOneWidget);
+  });
+
+  testWidgets('history has no gallery affordance', (tester) async {
+    await _pump(tester, remote: _BrokenRemote());
+    await tester.tap(find.byKey(const Key('open-history')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.photo_library), findsNothing);
+    expect(find.textContaining('gallery'), findsNothing);
+  });
+
   testWidgets('past cleans are reachable and list the session', (tester) async {
     await _pump(tester, remote: _BrokenRemote());
     await tester.tap(find.byKey(const Key('take-photo')));

@@ -18,7 +18,7 @@ CleanSession _session(
   zone: 'mirror',
   capturedAt: at,
   day: day,
-  photoNames: photos,
+  photos: [for (final n in photos) SessionPhoto(name: n, bytes: 1)],
   status: status,
 );
 
@@ -122,47 +122,63 @@ void main() {
   });
 
   group('prune', () {
-    test('drops photos for old accepted sessions, keeps the record', () async {
-      var s = _session('old', day: '2026-01-01');
-      s = await store.addPhoto(s, _bytes(1));
-      await store.put(s.copyWith(status: SessionStatus.accepted));
-
-      await store.prune(today: '2026-09-12');
+    test('frees oldest accepted photos until the budget fits', () async {
+      for (final id in ['old', 'mid', 'new']) {
+        var s = _session(
+          id,
+          at: '2026-09-0${['old', 'mid', 'new'].indexOf(id) + 1}T10:00:00Z',
+        );
+        s = await store.addPhoto(s, _bytes(1));
+        await store.put(s.copyWith(status: SessionStatus.accepted));
+      }
+      // 3 photos x 8 bytes = 24; a 16-byte budget must free exactly one.
+      await store.prune(budgetBytes: 16);
 
       final loaded = await store.load();
-      expect(loaded.single.photoNames, isEmpty);
-      expect(loaded.single.status, SessionStatus.accepted);
+      final byId = {for (final s in loaded) s.id: s};
+      expect(byId['old']!.photos, isEmpty, reason: 'oldest freed first');
+      expect(byId['mid']!.photos, isNotEmpty);
+      expect(byId['new']!.photos, isNotEmpty);
+      // The record survives its images.
+      expect(byId['old']!.status, SessionStatus.accepted);
       expect(files.deleted, ['old-00.jpg']);
     });
 
-    test('never prunes a queued session, however old', () async {
-      // Discarding un-credited work is the exact failure this store exists
-      // to prevent.
-      var s = _session('old', day: '2020-01-01');
+    test('does nothing while inside the budget', () async {
+      var s = _session('s1');
       s = await store.addPhoto(s, _bytes(1));
-      await store.put(s.copyWith(status: SessionStatus.queued));
-
-      await store.prune(today: '2026-09-12');
-
-      expect((await store.load()).single.photoNames, ['old-00.jpg']);
+      await store.put(s.copyWith(status: SessionStatus.accepted));
+      await store.prune(budgetBytes: 1000);
       expect(files.deleted, isEmpty);
     });
 
-    test('leaves recent accepted sessions alone', () async {
-      var s = _session('recent', day: '2026-09-10');
+    test('never frees a clean that has not reached the PC', () async {
+      // Discarding un-credited work is the failure this store exists to
+      // prevent, so a tight budget must not reach it.
+      var s = _session('queued', at: '2020-01-01T10:00:00Z');
       s = await store.addPhoto(s, _bytes(1));
-      await store.put(s.copyWith(status: SessionStatus.accepted));
+      await store.put(s.copyWith(status: SessionStatus.queued));
 
-      await store.prune(today: '2026-09-12');
+      await store.prune(budgetBytes: 0);
 
-      expect((await store.load()).single.photoNames, ['recent-00.jpg']);
+      expect((await store.load()).single.photos, isNotEmpty);
+      expect(files.deleted, isEmpty);
     });
 
-    test('is a no-op when there is nothing to prune', () async {
-      await store.put(_session('s1'));
-      final before = files.index;
-      await store.prune(today: '2026-09-12');
-      expect(files.index, before);
+    test('never frees a self-logged clean', () async {
+      var s = _session('self', at: '2020-01-01T10:00:00Z');
+      s = await store.addPhoto(s, _bytes(1));
+      await store.put(s.copyWith(status: SessionStatus.selfLogged));
+      await store.prune(budgetBytes: 0);
+      expect((await store.load()).single.photos, isNotEmpty);
+    });
+
+    test('totalBytes sums every stored photo', () async {
+      var s = _session('s1');
+      s = await store.addPhoto(s, _bytes(1));
+      s = await store.addPhoto(s, _bytes(2));
+      await store.put(s);
+      expect(await store.totalBytes(), 16);
     });
   });
 
