@@ -49,6 +49,39 @@ def _entry_from_raw(day: str, raw: object) -> ZoneListEntry | None:
     return ZoneListEntry(effective_from=day, zones=cleaned, edited_at=edited_at)
 
 
+def entries_from_payload(raw: object) -> tuple[ZoneListEntry, ...] | None:
+    """Parse a history payload. ``None`` means "not a history at all".
+
+    Split out of :func:`load_zone_list_entries` so the RTDB transport
+    (:mod:`home_guard._sync_zones`) parses the *same* shape with the *same*
+    code as the file does -- a second parser is how the two representations
+    would drift. ``None`` rather than ``()`` for garbage, so a caller can tell
+    "could not read it" from "read it, it was empty".
+    """
+    if not isinstance(raw, dict):
+        return None
+    entries_raw = raw.get("e")
+    if not isinstance(entries_raw, dict):
+        return None
+    entries = [
+        entry
+        for day, raw_entry in entries_raw.items()
+        if (entry := _entry_from_raw(day, raw_entry)) is not None
+    ]
+    return tuple(sorted(entries, key=lambda e: e.effective_from))
+
+
+def payload_from_entries(entries: tuple[ZoneListEntry, ...]) -> dict[str, object]:
+    """Serialise a history to the on-disk/on-wire shape."""
+    return {
+        "v": _SCHEMA_VERSION,
+        "e": {
+            e.effective_from: {"zones": list(e.zones), "t": e.edited_at}
+            for e in entries
+        },
+    }
+
+
 def load_zone_list_entries(path: Path | None = None) -> tuple[ZoneListEntry, ...]:
     """Read every recorded edit, oldest first. Missing/corrupt file -> empty."""
     target = path if path is not None else ZONE_LIST_FILE
@@ -59,17 +92,8 @@ def load_zone_list_entries(path: Path | None = None) -> tuple[ZoneListEntry, ...
     except (OSError, json.JSONDecodeError) as exc:
         _logger.warning("could not read zone list history %s: %s", target, exc)
         return ()
-    if not isinstance(raw, dict):
-        return ()
-    entries_raw = raw.get("e")
-    if not isinstance(entries_raw, dict):
-        return ()
-    entries = [
-        entry
-        for day, raw_entry in entries_raw.items()
-        if (entry := _entry_from_raw(day, raw_entry)) is not None
-    ]
-    return tuple(sorted(entries, key=lambda e: e.effective_from))
+    parsed = entries_from_payload(raw)
+    return parsed if parsed is not None else ()
 
 
 def zone_list_for_day(entries: tuple[ZoneListEntry, ...], day: str) -> tuple[str, ...]:
@@ -84,14 +108,20 @@ def zone_list_for_day(entries: tuple[ZoneListEntry, ...], day: str) -> tuple[str
     return max(applicable, key=lambda e: e.effective_from).zones
 
 
+def write_entries(entries: tuple[ZoneListEntry, ...], path: Path | None = None) -> None:
+    """Persist a whole history atomically.
+
+    Public because a merge (:mod:`home_guard._zone_merge`) produces an entire
+    history rather than one appended edit, and re-appending each merged entry
+    through :func:`record_zone_list_change` would rewrite every ``edited_at``
+    and so destroy the very timestamps the merge resolves collisions by.
+    """
+    target = path if path is not None else ZONE_LIST_FILE
+    _write_entries(entries, target)
+
+
 def _write_entries(entries: tuple[ZoneListEntry, ...], path: Path) -> None:
-    payload = {
-        "v": _SCHEMA_VERSION,
-        "e": {
-            e.effective_from: {"zones": list(e.zones), "t": e.edited_at}
-            for e in entries
-        },
-    }
+    payload = payload_from_entries(entries)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")

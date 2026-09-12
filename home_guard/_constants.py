@@ -63,6 +63,16 @@ SYNC_PREFIX: Final = "home-guard-sync"
 SYNC_CHALLENGE_PATH: Final = f"{SYNC_PREFIX}/challenge/current.json"
 SYNC_EVIDENCE_PATH: Final = f"{SYNC_PREFIX}/evidence/current.json"
 
+# The zone rotation, shared both ways: the phone edits it too, so this node
+# carries the WHOLE forward-only history (the exact on-disk shape of
+# ``.zone_list``), not just the current list. Merging is then a dict union --
+# see ``_zone_merge.py`` for the three rules. Deliberately unsigned, unlike
+# the challenge and clear-log stores: a zone name grants nothing, and signing
+# it would mean putting the shared HMAC key on the phone, which is exactly
+# what ``docs/DOCS-marker-protocol.md`` rejected. The worst a bad write can
+# do is rename the thing you are asked to tidy.
+SYNC_ZONES_PATH: Final = f"{SYNC_PREFIX}/zones/current.json"
+
 # Decoded-photo size cap. The phone app re-encodes at a lower JPEG quality
 # to stay under this before ever uploading; _sync_evidence.save_evidence_photo
 # enforces the same number server-side, so a stale app build or a stray
