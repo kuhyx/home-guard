@@ -188,7 +188,10 @@ void main() {
     // The PC republishes the record as consumed once it accepts.
     final report = await _queue(store, _withChallenge(consumed: true)).drain();
     expect(report.uploaded, 1);
-    expect((await store.load()).single.status, SessionStatus.accepted);
+    final settled = (await store.load()).single;
+    expect(settled.status, SessionStatus.accepted);
+    // A green tick still captioned "waiting to confirm" contradicts itself.
+    expect(settled.detail, isEmpty);
   });
 
   test('a consumed challenge for a DIFFERENT token settles nothing', () async {

@@ -132,6 +132,26 @@ void main() {
     expect(find.textContaining('waiting on desk'), findsOneWidget);
   });
 
+  testWidgets('a consumed slot is not announced as still waiting', (
+    tester,
+  ) async {
+    // "The PC is waiting on desk" for a slot already cleared is a small lie
+    // the user would act on.
+    final remote = MemRemote()
+      ..files[kChallengePath] = jsonEncode({
+        'day': _today,
+        'slot': '0800',
+        'zone': 'desk',
+        'token': 'tok',
+        'issued_at': 'T',
+        'consumed': true,
+      });
+    await _pump(tester, remote: remote);
+    expect(find.byKey(const Key('assigned')), findsNothing);
+    // ...but the camera is still offered: you may clean anything you like.
+    expect(find.byKey(const Key('take-photo')), findsOneWidget);
+  });
+
   testWidgets('you can clean a zone the PC did not ask for', (tester) async {
     final (store, _) = await _pump(
       tester,

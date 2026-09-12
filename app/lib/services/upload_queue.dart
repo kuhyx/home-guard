@@ -87,7 +87,11 @@ class UploadQueue {
           challenge != null &&
           challenge.token == session.token &&
           challenge.consumed) {
-        await store.put(session.copyWith(status: SessionStatus.accepted));
+        // Clear the detail too: a green tick still captioned "waiting for
+        // the PC to confirm" contradicts itself on screen.
+        await store.put(
+          session.copyWith(status: SessionStatus.accepted, detail: ''),
+        );
         uploaded++;
         continue;
       }

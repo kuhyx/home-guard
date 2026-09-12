@@ -95,7 +95,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setState(() {
       _zoneNames = names;
-      _assigned = challenge?.zone;
+      // Only while the slot is actually outstanding. Announcing "the PC is
+      // waiting on desk" for a slot already cleared is a small lie the user
+      // would act on.
+      _assigned = (challenge != null && challenge.isSatisfiable(_clock()))
+          ? challenge.zone
+          : null;
       _selected ??= names.contains(challenge?.zone)
           ? challenge!.zone
           : names.firstOrNull;
