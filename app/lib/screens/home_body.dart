@@ -1,119 +1,118 @@
 import 'package:flutter/material.dart';
-import 'package:home_guard_app/models/challenge.dart';
 import 'package:home_guard_app/ui/theme.dart';
 
 /// Where the home screen is in the capture flow.
+///
+/// Note what is *absent*: there is no longer a phase meaning "the PC has
+/// published nothing, so you cannot do anything". Cleaning is something you
+/// do with your hands; the PC not being switched on is not a reason the app
+/// should refuse to record it.
 enum HomePhase {
-  /// Fetching the challenge.
+  /// Loading the rotation.
   loading,
 
   /// Firebase is not set up on this device.
   notConfigured,
 
-  /// The fetch failed.
-  error,
-
-  /// The PC has nothing published.
-  noChallenge,
-
-  /// Today's slot was already cleared.
-  consumed,
-
-  /// The published challenge is for another day.
-  stale,
-
-  /// A photo can be taken.
+  /// Ready to photograph the chosen zone.
   ready,
 
   /// The camera is open.
   capturing,
 
-  /// Encoding + uploading.
+  /// Sending to the PC.
   uploading,
 
-  /// Uploaded; waiting for the PC to drain the node.
-  awaitingPc,
-
-  /// The PC drained the node -- accepted.
+  /// The PC took it.
   accepted,
 
-  /// Uploaded but never confirmed within the poll window.
-  unconfirmed,
+  /// Saved on this phone; it will go to the PC later.
+  savedOffline,
 }
 
-/// The home screen's body: zone headline, status line, one button.
+/// The home screen's body: pick a zone, photograph it, finish.
 ///
-/// Stateless and fully driven by [phase] so every state is a plain widget
-/// test with no timers. The only button that exists is the camera button
-/// -- there is intentionally no "pick from gallery" anywhere.
+/// Stateless and fully driven by its inputs, so every state is a plain
+/// widget test with no timers.
 class HomeBody extends StatelessWidget {
   /// Creates the body.
   const HomeBody({
     required this.phase,
-    required this.challenge,
+    required this.zones,
+    required this.selectedZone,
+    required this.photoCount,
     required this.detail,
+    required this.assignedZone,
+    required this.onZoneSelected,
     required this.onTakePhoto,
-    required this.onRefresh,
+    required this.onFinish,
     required this.onOpenSettings,
+    required this.onOpenHistory,
     super.key,
   });
 
   /// Current phase.
   final HomePhase phase;
 
-  /// The last challenge read, if any.
-  final Challenge? challenge;
+  /// The rotation, from the local cache when the PC is unreachable.
+  final List<String> zones;
+
+  /// The zone being cleaned.
+  final String? selectedZone;
+
+  /// How many photos this clean has so far.
+  final int photoCount;
 
   /// Status detail for the current phase.
   final String detail;
 
-  /// Opens the camera.
+  /// The zone the PC is waiting on, when it has said. Decoration only --
+  /// never a precondition for the camera.
+  final String? assignedZone;
+
+  /// Called when a different zone is chosen.
+  final ValueChanged<String> onZoneSelected;
+
+  /// Opens the camera for one more photo.
   final VoidCallback onTakePhoto;
 
-  /// Re-reads the challenge.
-  final VoidCallback onRefresh;
+  /// Finishes the clean and tries to send it.
+  final VoidCallback onFinish;
 
   /// Opens the sync settings.
   final VoidCallback onOpenSettings;
 
+  /// Opens the list of past cleans.
+  final VoidCallback onOpenHistory;
+
   bool get _busy =>
       phase == HomePhase.loading ||
       phase == HomePhase.capturing ||
-      phase == HomePhase.uploading ||
-      phase == HomePhase.awaitingPc;
+      phase == HomePhase.uploading;
 
   String _headline() => switch (phase) {
-    HomePhase.loading => 'Checking with the PC…',
+    HomePhase.loading => 'Loading…',
     HomePhase.notConfigured => 'Not connected',
-    HomePhase.error => 'Could not reach the PC',
-    HomePhase.noChallenge => 'Nothing due',
-    HomePhase.consumed => 'Done for today',
-    HomePhase.stale => 'Nothing due yet',
-    HomePhase.ready ||
-    HomePhase.capturing ||
-    HomePhase.uploading ||
-    HomePhase.awaitingPc ||
-    HomePhase.accepted ||
-    HomePhase.unconfirmed => challenge?.zone ?? '',
+    HomePhase.accepted => 'Done — the PC took it',
+    HomePhase.savedOffline => 'Saved on this phone',
+    _ => selectedZone ?? 'Pick a place',
   };
 
   String _hint() => switch (phase) {
-    HomePhase.ready => 'Clear it, then take one photo of it.',
+    HomePhase.ready when photoCount == 0 =>
+      'Clean it, then take as many photos as it takes.',
+    HomePhase.ready => '$photoCount photo${photoCount == 1 ? '' : 's'} so far.',
     HomePhase.capturing => 'Camera open…',
-    HomePhase.uploading => 'Uploading…',
-    HomePhase.awaitingPc => 'Waiting for the PC to accept…',
-    HomePhase.noChallenge =>
-      'The PC publishes a zone when a slot is due; nothing is due now.',
+    HomePhase.uploading => 'Sending to the PC…',
     _ => '',
   };
 
   Color _statusColor(BuildContext context) {
     final status = Theme.of(context).extension<AppStatusColors>()!;
     return switch (phase) {
-      HomePhase.accepted || HomePhase.consumed => status.success,
-      HomePhase.error ||
+      HomePhase.accepted => status.success,
+      HomePhase.savedOffline => status.warning,
       HomePhase.notConfigured => Theme.of(context).colorScheme.error,
-      HomePhase.unconfirmed || HomePhase.stale => status.warning,
       _ => Theme.of(context).colorScheme.onSurfaceVariant,
     };
   }
@@ -126,7 +125,7 @@ class HomeBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Spacer(),
+          const SizedBox(height: 8),
           Text(
             _headline(),
             key: const Key('headline'),
@@ -135,26 +134,41 @@ class HomeBody extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(_hint(), textAlign: TextAlign.center, style: text.bodyLarge),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text(
             detail,
             key: const Key('detail'),
             textAlign: TextAlign.center,
             style: text.bodyMedium?.copyWith(color: _statusColor(context)),
           ),
-          const Spacer(),
+          const SizedBox(height: 16),
+          if (assignedZone != null && phase == HomePhase.ready)
+            Text(
+              'The PC is waiting on $assignedZone',
+              key: const Key('assigned'),
+              textAlign: TextAlign.center,
+              style: text.bodySmall,
+            ),
+          Expanded(child: _zonePicker(context)),
           if (_busy) const LinearProgressIndicator(),
-          if (phase == HomePhase.ready ||
-              phase == HomePhase.capturing ||
-              phase == HomePhase.uploading ||
-              phase == HomePhase.awaitingPc ||
-              phase == HomePhase.unconfirmed)
+          const SizedBox(height: 8),
+          if (phase == HomePhase.ready)
             FilledButton.icon(
               key: const Key('take-photo'),
-              onPressed: _busy ? null : onTakePhoto,
+              onPressed: _busy || selectedZone == null ? null : onTakePhoto,
               icon: const Icon(Icons.photo_camera),
-              label: Text('Take photo of ${challenge?.zone ?? "zone"}'),
+              label: Text(photoCount == 0 ? 'Take a photo' : 'Another photo'),
             ),
+          if (phase == HomePhase.ready && photoCount > 0) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const Key('finish'),
+              onPressed: _busy ? null : onFinish,
+              icon: const Icon(Icons.check),
+              label: Text('Done — $photoCount photo'
+                  '${photoCount == 1 ? '' : 's'}'),
+            ),
+          ],
           if (phase == HomePhase.notConfigured)
             FilledButton(
               key: const Key('open-settings'),
@@ -162,12 +176,41 @@ class HomeBody extends StatelessWidget {
               child: const Text('Connect Firebase'),
             ),
           const SizedBox(height: 8),
-          OutlinedButton.icon(
-            key: const Key('refresh'),
-            onPressed: _busy ? null : onRefresh,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Check again'),
+          TextButton.icon(
+            key: const Key('open-history'),
+            onPressed: onOpenHistory,
+            // Deliberately NOT Icons.photo_library: camera-only capture is
+            // load-bearing security and a gallery icon anywhere in this app
+            // is asserted against.
+            icon: const Icon(Icons.history),
+            label: const Text('Past cleans'),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _zonePicker(BuildContext context) {
+    if (phase != HomePhase.ready || zones.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return SingleChildScrollView(
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final zone in zones)
+            ChoiceChip(
+              key: Key('zone-$zone'),
+              label: Text(zone),
+              selected: zone == selectedZone,
+              // Changing zone mid-clean would orphan the photos already
+              // taken against the previous one.
+              onSelected: photoCount > 0
+                  ? null
+                  : (_) => onZoneSelected(zone),
+            ),
         ],
       ),
     );

@@ -89,16 +89,27 @@ class ChallengeSync {
     }
   }
 
-  /// Uploads [photo] as evidence for [challenge]. Never throws.
+  /// Uploads [photos] as evidence for [challenge]. Never throws.
   ///
-  /// `day`/`slot`/`zone`/`token` are copied from [challenge] untouched --
-  /// the PC's verifier compares them by exact equality. Returns
-  /// [SyncOutcome.ok] once the write is durable; acceptance is a separate
-  /// question answered by [evidenceDrained].
+  /// `day`/`slot`/`token` are copied from [challenge] untouched -- the PC's
+  /// verifier compares them by exact equality. `zone` is whatever was
+  /// actually cleaned, which need not be the zone the challenge names: the
+  /// PC checks it for membership of the rotation, so five photos of a mirror
+  /// are not thrown away because the cursor pointed at the desk.
+  ///
+  /// [capturedAt] is when the photos were TAKEN, which for a session queued
+  /// offline is not now. The PC files the clear entry under that day, so a
+  /// clean done today unlocks today and one done yesterday keeps its record
+  /// without granting anything now.
+  ///
+  /// Returns [SyncOutcome.ok] once the write is durable; acceptance is a
+  /// separate question answered by [evidenceDrained].
   Future<ChallengeRead> uploadEvidence({
     required Challenge challenge,
-    required EncodedPhoto photo,
+    required List<EncodedPhoto> photos,
     required String deviceId,
+    String? zone,
+    DateTime? capturedAt,
   }) async {
     final client = await _open();
     if (client == null) {
@@ -107,21 +118,26 @@ class ChallengeSync {
         detail: 'Not synced — connect Firebase in Settings.',
       );
     }
+    final taken = (capturedAt ?? _clock()).toUtc();
     final payload = <String, Object?>{
       'day': challenge.day,
       'slot': challenge.slot,
-      'zone': challenge.zone,
+      'zone': zone ?? challenge.zone,
       'token': challenge.token,
       'device_id': deviceId,
-      'captured_at': _clock().toUtc().toIso8601String(),
-      'photo_b64': photo.base64,
-      'photo_mime': 'image/jpeg',
+      'captured_at': taken.toIso8601String(),
+      'captured_day': Challenge.dayOf(taken),
+      'photos': [
+        for (final p in photos) {'b64': p.base64, 'mime': 'image/jpeg'},
+      ],
     };
     try {
       await client.putFileText(
         kEvidencePath,
         jsonEncode(payload),
-        message: 'home-guard: evidence for ${challenge.day} ${challenge.slot}',
+        message:
+            'home-guard: ${photos.length} photo(s) for '
+            '${challenge.day} ${challenge.slot}',
       );
       return ChallengeRead(SyncOutcome.ok, challenge: challenge);
     } on Exception catch (e) {

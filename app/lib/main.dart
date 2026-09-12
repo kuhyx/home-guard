@@ -5,6 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:home_guard_app/screens/home_screen.dart';
 import 'package:home_guard_app/services/device_id.dart';
+import 'package:home_guard_app/services/session_files.dart';
+import 'package:home_guard_app/services/session_store.dart';
 import 'package:home_guard_app/ui/theme.dart';
 
 /// Entry point.
@@ -28,7 +30,10 @@ class HomeGuardApp extends StatelessWidget {
     return MaterialApp(
       title: 'home-guard',
       theme: buildAppTheme(),
-      home: HomeScreen(deviceId: deviceId),
+      home: HomeScreen(
+        deviceId: deviceId,
+        store: SessionStore(PathProviderSessionFiles()),
+      ),
     );
   }
 }

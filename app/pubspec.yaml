@@ -2,7 +2,7 @@ name: home_guard_app
 description: "home-guard phone app: shows the zone the PC is waiting on and uploads a camera-only photo echoing the PC's single-use challenge token."
 publish_to: 'none'
 
-version: 1.0.21+1
+version: 1.0.22+1
 
 environment:
   sdk: ^3.12.2
@@ -31,6 +31,7 @@ dependencies:
   # Camera-only capture. The gallery source is never rendered -- see
   # docs/DOCS-marker-protocol.md, "Why camera-only capture matters".
   image_picker: 1.2.3
+  path_provider: 2.1.6
   shared_preferences: 2.5.5
 
   # Shared "Sync settings" screen (Firebase), reused across every kuhy app
