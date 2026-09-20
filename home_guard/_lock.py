@@ -22,6 +22,7 @@ import tkinter as tk
 from gatelock import (
     Arbiter,
     GateRoot,
+    GrabPolicy,
     LockConfig,
     LockWindow,
     SurfaceInfo,
@@ -71,8 +72,10 @@ class HomeGuardGuard:
         self._config = LockConfig(
             mode="hard",
             overrideredirect=True,
-            grab="local" if demo_mode else "global",
-            disable_vt=not demo_mode,
+            grab=GrabPolicy(
+                kind="local" if demo_mode else "global",
+                disable_vt=not demo_mode,
+            ),
             app_name=_APP_NAME,
             rank=RANK_HOME_GUARD,
         )

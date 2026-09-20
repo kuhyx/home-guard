@@ -57,7 +57,7 @@ def build_surface(
         config,
         "Take a photo in the home-guard phone app once it's cleared.",
     )
-    row(parent, config, "", style=RowStyle(color=config.muted)).config(
+    row(parent, config, "", style=RowStyle(color=config.palette.muted)).config(
         textvariable=status_var
     )
     row(
@@ -65,7 +65,7 @@ def build_surface(
         config,
         "VT switching is disabled while this is up. To bypass without "
         "clearing anything: systemctl --user stop home-guard-gate.service",
-        style=RowStyle(role="caption", color=config.muted),
+        style=RowStyle(role="caption", color=config.palette.muted),
     )
     button = make_button(
         parent,
@@ -102,13 +102,13 @@ def open_escape_dialog(
     tracker = context.tracker
     dialog = tk.Toplevel(parent)
     dialog.title(_ESCAPE_HATCH_TITLE)
-    dialog.configure(bg=config.bg)
+    dialog.configure(bg=config.palette.bg)
     heading(dialog, config, _ESCAPE_HATCH_TITLE)
     row(
         dialog,
         config,
         f"Budget: {tracker.budget_summary()}",
-        style=RowStyle(color=config.muted),
+        style=RowStyle(color=config.palette.muted),
     )
     row(dialog, config, tracker.format_recent(), style=RowStyle(role="caption"))
 

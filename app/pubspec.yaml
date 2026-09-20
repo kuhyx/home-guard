@@ -2,7 +2,7 @@ name: home_guard_app
 description: "home-guard phone app: shows the zone the PC is waiting on and uploads a camera-only photo echoing the PC's single-use challenge token."
 publish_to: 'none'
 
-version: 1.0.27+1
+version: 1.0.28+1
 
 environment:
   sdk: ^3.12.2
@@ -16,7 +16,7 @@ dependencies:
   cupertino_icons: 1.0.9
   flutter:
     sdk: flutter
-  flutter_secure_storage: 11.1.1
+  flutter_secure_storage: 11.2.0
 
   # One-tap sign-in for the sync account. App-side only: crdt_sync stays pure
   # Dart so it keeps working on Linux desktop and headless.
@@ -26,7 +26,7 @@ dependencies:
   # Pure-Dart JPEG re-encoder: the PC rejects any decoded photo over
   # 600 kB, so the phone shrinks until it fits BEFORE uploading. Pure Dart
   # so the size guarantee is unit-tested, not hoped for.
-  image: 4.9.2
+  image: 4.10.1
 
   # Camera-only capture. The gallery source is never rendered -- see
   # docs/DOCS-marker-protocol.md, "Why camera-only capture matters".
