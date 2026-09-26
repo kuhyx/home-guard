@@ -17,15 +17,29 @@ jobs:
         with:
           python-version: "3.x"
 
+      # uv with a cached wheel store installs requirements.txt in seconds;
+      # plain pip took 24 s of a 44 s run.
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: requirements.txt
+
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: uv pip install --system -r requirements.txt
 
       # The gate's keyboard and layout tests drive real Tk: widget heights and
       # the focus ring come from the font engine, and no mock can answer what
       # they ask. Without a display they do not skip -- they fail, which is how
       # this job stayed red while the tests themselves were fine.
+      #
+      # ubuntu-latest already ships xvfb, so the unconditional `apt-get
+      # update` cost 8 s to learn "already the newest version". Install only
+      # if an image ever drops it.
       - name: Install a virtual X display
-        run: sudo apt-get update && sudo apt-get install -y xvfb
+        run: command -v xvfb-run >/dev/null || { sudo apt-get update && sudo apt-get install -y xvfb; }
 
+      # No -n auto: the suite takes ~2 s serially and pytest-xdist was
+      # measured slower here (4 workers: 3.1 s), so worker startup would
+      # only add time. -q instead of -v keeps the log readable.
       - name: Run tests with coverage
-        run: xvfb-run -a -s "-screen 0 1600x1200x24" python -m pytest -v
+        run: xvfb-run -a -s "-screen 0 1600x1200x24" python -m pytest -q
