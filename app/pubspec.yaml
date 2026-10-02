@@ -2,7 +2,7 @@ name: home_guard_app
 description: "home-guard phone app: shows the zone the PC is waiting on and uploads a camera-only photo echoing the PC's single-use challenge token."
 publish_to: 'none'
 
-version: 1.0.32+1
+version: 1.0.33+1
 
 environment:
   sdk: ^3.12.2
@@ -13,7 +13,7 @@ dependencies:
       url: https://github.com/kuhyx/utils
       ref: crdt_sync_dart-v0.11.1
       path: crdt_sync_dart
-  cupertino_icons: 1.0.9
+  cupertino_icons: 2.0.0
   flutter:
     sdk: flutter
   flutter_secure_storage: 11.2.0
