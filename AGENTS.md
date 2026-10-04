@@ -27,6 +27,12 @@ commands + conventions only.
   why the bump is not a pre-commit hook).
 - Install for real (not run automatically by any agent session — this
   enables a systemd timer that can lock the screen): `bash install.sh`.
+- run: `python3 -m home_guard --help`
+- test: `xvfb-run -a -s "-screen 0 1600x1200x24" python -m pytest -q`
+- test-changed: `scripts/test_changed.sh`
+- lint: `uvx ruff@0.15.2 check .`
+- coverage: `python3 -m pytest home_guard/tests/ -q --cov=home_guard --cov-report=term-missing`
+- coverage-gaps: `coverage-gaps coverage.xml`
 
 ## Architecture
 
