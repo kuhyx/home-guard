@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: kuhyx/utils/flutter-setup@flutter-setup-v1
         with:
-          flutter-version: 3.47.6
+          flutter-version: 3.47.7
           working-directory: app
       - run: flutter pub get
       - run: flutter analyze
@@ -103,7 +103,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.47.6
+          flutter-version: 3.47.7
           channel: stable
           cache: true
 
