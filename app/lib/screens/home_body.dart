@@ -1,3 +1,4 @@
+import 'package:design_system/design_system.dart' show FitGrid;
 import 'package:flutter/material.dart';
 import 'package:home_guard_app/ui/theme.dart';
 
@@ -165,8 +166,10 @@ class HomeBody extends StatelessWidget {
               key: const Key('finish'),
               onPressed: _busy ? null : onFinish,
               icon: const Icon(Icons.check),
-              label: Text('Done — $photoCount photo'
-                  '${photoCount == 1 ? '' : 's'}'),
+              label: Text(
+                'Done — $photoCount photo'
+                '${photoCount == 1 ? '' : 's'}',
+              ),
             ),
           ],
           if (phase == HomePhase.notConfigured)
@@ -194,25 +197,24 @@ class HomeBody extends StatelessWidget {
     if (phase != HomePhase.ready || zones.isEmpty) {
       return const SizedBox.shrink();
     }
-    return SingleChildScrollView(
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          for (final zone in zones)
-            ChoiceChip(
-              key: Key('zone-$zone'),
-              label: Text(zone),
-              selected: zone == selectedZone,
-              // Changing zone mid-clean would orphan the photos already
-              // taken against the previous one.
-              onSelected: photoCount > 0
-                  ? null
-                  : (_) => onZoneSelected(zone),
-            ),
-        ],
-      ),
+    return FitGrid(
+      itemCount: zones.length,
+      columns: 2,
+      minSquare: 0.3,
+      padding: EdgeInsets.zero,
+      itemBuilder: (context, i) {
+        final zone = zones[i];
+        return SizedBox.expand(
+          child: ChoiceChip(
+            key: Key('zone-$zone'),
+            label: Text(zone, maxLines: 1, overflow: TextOverflow.ellipsis),
+            selected: zone == selectedZone,
+            // Changing zone mid-clean would orphan the photos already
+            // taken against the previous one.
+            onSelected: photoCount > 0 ? null : (_) => onZoneSelected(zone),
+          ),
+        );
+      },
     );
   }
 }

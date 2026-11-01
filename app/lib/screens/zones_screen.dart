@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:design_system/design_system.dart' show FitGrid;
 import 'package:flutter/material.dart';
 import 'package:home_guard_app/models/zone_history.dart';
+import 'package:home_guard_app/screens/zone_tile.dart';
 import 'package:home_guard_app/services/zone_sync.dart';
 
 /// Edit the zone rotation from the phone.
@@ -92,7 +94,7 @@ class _ZonesScreenState extends State<ZonesScreen> {
     unawaited(_save(next));
   }
 
-  void _reorder(int oldIndex, int newIndex) =>
+  void _move(int oldIndex, int newIndex) =>
       unawaited(_save(ZoneHistory.reorder(_zones, oldIndex, newIndex)));
 
   @override
@@ -127,19 +129,18 @@ class _ZonesScreenState extends State<ZonesScreen> {
                   ),
                 ),
                 Expanded(
-                  child: ReorderableListView.builder(
+                  child: FitGrid(
+                    columns: 2,
+                    minSquare: 0.3,
                     padding: const EdgeInsets.all(16),
                     itemCount: _zones.length,
-                    onReorderItem: _reorder,
-                    itemBuilder: (context, i) => ListTile(
-                      key: ValueKey(_zones[i]),
-                      title: Text(_zones[i]),
-                      leading: const Icon(Icons.drag_handle),
-                      trailing: IconButton(
-                        key: Key('remove-${_zones[i]}'),
-                        icon: const Icon(Icons.close),
-                        onPressed: () => _removeAt(i),
-                      ),
+                    itemBuilder: (context, i) => ZoneTile(
+                      name: _zones[i],
+                      onRemove: () => _removeAt(i),
+                      onMoveEarlier: i == 0 ? null : () => _move(i, i - 1),
+                      onMoveLater: i == _zones.length - 1
+                          ? null
+                          : () => _move(i, i + 1),
                     ),
                   ),
                 ),

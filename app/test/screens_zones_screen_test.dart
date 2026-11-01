@@ -1,4 +1,5 @@
 import 'package:crdt_sync/crdt_sync.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:home_guard_app/screens/zones_screen.dart';
@@ -27,10 +28,8 @@ ZoneSync _sync(RemoteStore? remote) => ZoneSync(
 
 /// Scoped to the rotation list, so the TextField's 'mirror' hint (good UX,
 /// and a real zone name) cannot be mistaken for a list entry.
-Finder _inList(String name) => find.descendant(
-  of: find.byType(ReorderableListView),
-  matching: find.text(name),
-);
+Finder _inList(String name) =>
+    find.descendant(of: find.byType(FitGrid), matching: find.text(name));
 
 Future<void> _pump(WidgetTester tester, ZoneSync sync) async {
   await tester.pumpWidget(MaterialApp(home: ZonesScreen(sync: sync)));
@@ -94,7 +93,7 @@ void main() {
     await tester.enterText(find.byKey(const Key('zone-input')), '   ');
     await tester.tap(find.byKey(const Key('zone-add')));
     await tester.pumpAndSettle();
-    expect(find.byType(ListTile), findsNWidgets(3));
+    expect(find.byIcon(Icons.close), findsNWidgets(3));
   });
 
   testWidgets('removing a zone drops it', (tester) async {
@@ -102,7 +101,7 @@ void main() {
     await tester.tap(find.byKey(const Key('remove-desk')));
     await tester.pumpAndSettle();
     expect(_inList('desk'), findsNothing);
-    expect(find.byType(ListTile), findsNWidgets(2));
+    expect(find.byIcon(Icons.close), findsNWidgets(2));
   });
 
   testWidgets('the last zone cannot be removed', (tester) async {
@@ -126,5 +125,25 @@ void main() {
     await _pump(tester, _sync(_BrokenRemote()));
     expect(find.byIcon(Icons.photo_library), findsNothing);
     expect(find.textContaining('gallery'), findsNothing);
+  });
+
+  testWidgets('long-press moves a zone later, then earlier', (tester) async {
+    await _pump(tester, _sync(_BrokenRemote()));
+    double dx(String name) => tester.getTopLeft(_inList(name)).dx;
+    double dy(String name) => tester.getTopLeft(_inList(name)).dy;
+
+    await tester.longPress(find.byKey(const Key('zone-tile-desk')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('move-later')));
+    await tester.pumpAndSettle();
+    // Row-major 2-column grid: [kitchen counter, desk, entryway].
+    expect(dx('desk'), greaterThan(dx('kitchen counter')));
+    expect(dy('desk'), dy('kitchen counter'));
+
+    await tester.longPress(find.byKey(const Key('zone-tile-desk')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('move-earlier')));
+    await tester.pumpAndSettle();
+    expect(dx('desk'), lessThan(dx('kitchen counter')));
   });
 }

@@ -2,7 +2,7 @@ name: home_guard_app
 description: "home-guard phone app: shows the zone the PC is waiting on and uploads a camera-only photo echoing the PC's single-use challenge token."
 publish_to: 'none'
 
-version: 1.0.42+1
+version: 1.0.43+1
 
 environment:
   sdk: ^3.12.2
@@ -11,9 +11,15 @@ dependencies:
   crdt_sync:
     git:
       url: https://github.com/kuhyx/utils
-      ref: crdt_sync_dart-v0.11.1
+      ref: crdt_sync_dart-v0.11.2
       path: crdt_sync_dart
   cupertino_icons: 2.0.0
+  # FitGrid: dense paged tiles so main screens never scroll vertically.
+  design_system:
+    git:
+      url: https://github.com/kuhyx/utils
+      ref: design_system-v0.3.0
+      path: design_system
   flutter:
     sdk: flutter
   flutter_secure_storage: 11.2.0
@@ -39,7 +45,7 @@ dependencies:
   sync_settings_ui:
     git:
       url: https://github.com/kuhyx/utils
-      ref: sync_settings_ui-v0.4.1
+      ref: sync_settings_ui-v0.4.2
       path: sync_settings_ui
   uuid: 4.6.0
 

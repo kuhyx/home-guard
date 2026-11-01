@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:design_system/design_system.dart'
+    show AppRadius, AppSpacing, FitGrid;
 import 'package:flutter/material.dart';
 import 'package:home_guard_app/models/clean_session.dart';
 import 'package:home_guard_app/screens/clean_detail_screen.dart';
@@ -61,13 +63,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: Text('Nothing recorded yet.'),
             );
           }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: sessions.length,
-            itemBuilder: (context, i) => _Row(
-              session: sessions[i],
-              onTap: () => unawaited(
-                _open(CleanDetailScreen(store: store, session: sessions[i])),
+          // Bottom gap keeps the last row clear of the floating button.
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 80),
+            child: FitGrid(
+              minSquare: 0.8,
+              padding: const EdgeInsets.all(16),
+              itemCount: sessions.length,
+              itemBuilder: (context, i) => _Tile(
+                session: sessions[i],
+                onTap: () => unawaited(
+                  _open(CleanDetailScreen(store: store, session: sessions[i])),
+                ),
               ),
             ),
           );
@@ -77,8 +84,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 }
 
-class _Row extends StatelessWidget {
-  const _Row({required this.session, required this.onTap});
+class _Tile extends StatelessWidget {
+  const _Tile({required this.session, required this.onTap});
 
   final CleanSession session;
   final VoidCallback onTap;
@@ -98,19 +105,35 @@ class _Row extends StatelessWidget {
       ),
     };
     final count = session.photoCount;
-    return ListTile(
-      key: Key('history-${session.id}'),
-      contentPadding: EdgeInsets.zero,
-      onTap: onTap,
-      trailing: const Icon(Icons.chevron_right),
-      leading: Icon(icon, color: colour),
-      title: Text(session.zone),
-      subtitle: Text(
-        [
-          session.day,
-          if (count > 0) '$count photo${count == 1 ? '' : 's'}',
-          if (session.detail.isNotEmpty) session.detail,
-        ].join(' · '),
+    return Material(
+      color: theme.colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
+        key: Key('history-${session.id}'),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: colour),
+              Text(
+                session.zone,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                [
+                  session.day.replaceFirst(RegExp(r'^\d{4}-'), ''),
+                  if (count > 0) '$count photo${count == 1 ? '' : 's'}',
+                ].join(' · '),
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
