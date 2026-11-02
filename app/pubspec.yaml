@@ -2,7 +2,7 @@ name: home_guard_app
 description: "home-guard phone app: shows the zone the PC is waiting on and uploads a camera-only photo echoing the PC's single-use challenge token."
 publish_to: 'none'
 
-version: 1.0.44+1
+version: 1.0.45+1
 
 environment:
   sdk: ^3.12.2
@@ -26,7 +26,11 @@ dependencies:
 
   # One-tap sign-in for the sync account. App-side only: crdt_sync stays pure
   # Dart so it keeps working on Linux desktop and headless.
-  google_sign_in: 7.2.0
+  google_account_token:
+    git:
+      url: https://github.com/kuhyx/utils
+      ref: google_account_token-v0.1.0
+      path: google_account_token
   http: 1.6.0
 
   # Pure-Dart JPEG re-encoder: the PC rejects any decoded photo over

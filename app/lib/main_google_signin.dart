@@ -2,7 +2,7 @@
 // Autodrive entrypoint: jump straight into the Google one-tap sign-in on
 // launch, so a deploy with `--target lib/main_google_signin.dart` can be
 // driven end-to-end over adb. The Flutter tree is invisible to uiautomator,
-// but the Credential Manager account picker this triggers is a native sheet,
+// but the system account chooser this triggers is a native dialog,
 // so the one tap that matters can be found by text and tapped. Same package,
 // same keystore, same secure-storage session -- redeploying the normal
 // entrypoint afterwards keeps the sign-in.
@@ -51,7 +51,7 @@ class _SignInProbeState extends State<_SignInProbe> {
       if (client == null) {
         _report(
           'probe: CANCELLED (picker dismissed or sign-in unavailable -- '
-          'see logcat GoogleSignIn)',
+          'see logcat google_account_token)',
         );
         return;
       }
