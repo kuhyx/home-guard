@@ -2,7 +2,7 @@ name: home_guard_app
 description: "home-guard phone app: shows the zone the PC is waiting on and uploads a camera-only photo echoing the PC's single-use challenge token."
 publish_to: 'none'
 
-version: 1.0.49+1
+version: 1.0.50+1
 
 environment:
   sdk: ^3.12.2
@@ -49,7 +49,7 @@ dependencies:
   sync_settings_ui:
     git:
       url: https://github.com/kuhyx/utils
-      ref: sync_settings_ui-v0.6.0
+      ref: sync_settings_ui-v0.6.1
       path: sync_settings_ui
   uuid: 4.6.0
 
