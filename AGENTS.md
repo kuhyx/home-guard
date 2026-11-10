@@ -64,8 +64,12 @@ commands + conventions only.
 - `_accept.py` — the full verify → photo → log → rotate → drain pipeline.
 - `_poller.py` — polls Firebase off the Tk thread via a `ThreadPoolExecutor`,
   never lets a check exception kill the loop.
-- `_lock.py` / `_view.py` — the gatelock wiring (Arbiter/LockConfig/
-  LockWindow) and the Tk widgets. See their docstrings re: coverage.
+- `_lock.py` / `_view.py` / `_escape_dialog.py` — the gatelock wiring
+  (Arbiter/LockConfig/LockWindow), the Tk lock surface and the escape
+  dialog. See their docstrings re: coverage. Text-free (kuhy's textgate
+  rule): cues are drawn icons from `_icons.py`; only the zone name and the
+  bypass command are painted. `tests/test_lock_no_words.py` and
+  `app/test/no_words_test.dart` fail on any other painted word.
 - `_paths.py` — `HomeGuardPaths`, the one bundle every path-taking function
   accepts instead of individual `*_path`/`*_key_file` kwargs (keeps
   `ruff`'s PLR0913 clean and gives tests one override point that can never
