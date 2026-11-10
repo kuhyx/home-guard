@@ -115,7 +115,7 @@ void main() {
     // off is not a reason the app should refuse to record it.
     await _pump(tester, remote: _BrokenRemote());
     expect(find.byKey(const Key('take-photo')), findsOneWidget);
-    expect(find.textContaining('Offline'), findsOneWidget);
+    expect(find.byKey(const Key('cue-offlineDefault')), findsOneWidget);
   });
 
   testWidgets('offline falls back to the default rotation', (tester) async {
@@ -129,7 +129,13 @@ void main() {
   ) async {
     await _pump(tester, remote: _remoteWithZonesAndChallenge());
     expect(find.byKey(const Key('assigned')), findsOneWidget);
-    expect(find.textContaining('waiting on desk'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('assigned')),
+        matching: find.text('desk'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('a consumed slot is not announced as still waiting', (
@@ -174,7 +180,13 @@ void main() {
       await tester.tap(find.byKey(const Key('take-photo')));
       await tester.pumpAndSettle();
     }
-    expect(find.textContaining('7 photos so far'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('photo-tally')),
+        matching: find.text('7'),
+      ),
+      findsOneWidget,
+    );
 
     final sessions = await store.load();
     expect(sessions.single.photoCount, 7);
@@ -186,10 +198,10 @@ void main() {
     tester,
   ) async {
     await _pump(tester, remote: _BrokenRemote());
-    expect(find.text('Take a photo'), findsOneWidget);
+    expect(find.byIcon(Icons.photo_camera), findsOneWidget);
     await tester.tap(find.byKey(const Key('take-photo')));
     await tester.pumpAndSettle();
-    expect(find.text('Another photo'), findsOneWidget);
+    expect(find.byIcon(Icons.add_a_photo), findsOneWidget);
   });
 
   testWidgets('the zone cannot be switched once photos exist', (tester) async {
@@ -209,7 +221,7 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('take-photo')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('No photo taken'), findsOneWidget);
+    expect(find.byKey(const Key('cue-noPhoto')), findsOneWidget);
     expect(await store.load(), isEmpty);
   });
 

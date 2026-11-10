@@ -45,7 +45,7 @@ void main() {
     await _pump(tester, _sync(_BrokenRemote()));
     expect(_inList('desk'), findsOneWidget);
     expect(_inList('kitchen counter'), findsOneWidget);
-    expect(find.textContaining('defaults'), findsOneWidget);
+    expect(find.byKey(const Key('zones-cue-fallback')), findsOneWidget);
   });
 
   testWidgets('adding a zone works with no signal and says so', (tester) async {
@@ -56,7 +56,7 @@ void main() {
 
     expect(_inList('mirror'), findsOneWidget);
     // The banner must be honest: saved here, not yet at the PC.
-    expect(find.textContaining('when you have signal'), findsOneWidget);
+    expect(find.byKey(const Key('zones-cue-savedLocal')), findsOneWidget);
   });
 
   testWidgets('an offline add survives a reopen', (tester) async {
@@ -77,7 +77,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(remote.puts, contains(kZonesPath));
-    expect(find.textContaining('sent to the PC'), findsOneWidget);
+    expect(find.byKey(const Key('zones-cue-sent')), findsOneWidget);
   });
 
   testWidgets('a duplicate add is ignored', (tester) async {
@@ -114,7 +114,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_inList('entryway'), findsOneWidget);
-    expect(find.textContaining('at least one zone'), findsOneWidget);
+    expect(find.byKey(const Key('zones-cue-needOne')), findsOneWidget);
   });
 
   testWidgets('there is no gallery affordance anywhere on this screen', (

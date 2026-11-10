@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:home_guard_app/models/clean_session.dart';
 import 'package:home_guard_app/screens/history_screen.dart';
 import 'package:home_guard_app/screens/home_body.dart';
+import 'package:home_guard_app/screens/home_cue.dart';
 import 'package:home_guard_app/screens/zones_screen.dart';
 import 'package:home_guard_app/services/session_store.dart';
 import 'package:home_guard_app/services/zone_sync.dart';
@@ -44,13 +45,13 @@ void main() {
       MaterialApp(
         theme: buildAppTheme(),
         home: Scaffold(
-          appBar: AppBar(title: const Text('home-guard')),
+          appBar: AppBar(),
           body: HomeBody(
             phase: HomePhase.ready,
             zones: _zones(40),
             selectedZone: 'zone number 0',
             photoCount: 2,
-            detail: 'Saved here. It will reach the PC next time both are on.',
+            cue: HomeCue.savedOffline,
             assignedZone: 'zone number 3',
             onZoneSelected: (_) {},
             onTakePhoto: () => taken++,

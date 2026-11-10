@@ -101,32 +101,35 @@ class _CleanDetailScreenState extends State<CleanDetailScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                '${_session.day} · $count photo${count == 1 ? '' : 's'}',
-                key: const Key('detail-subtitle'),
-                style: theme.textTheme.bodyMedium,
+              child: Semantics(
+                label: '${_session.day} · $count photo${count == 1 ? '' : 's'}',
+                excludeSemantics: true,
+                child: Row(
+                  key: const Key('detail-subtitle'),
+                  children: [
+                    Text(_session.day, style: theme.textTheme.bodyMedium),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.photo_camera, size: 18),
+                    const SizedBox(width: 6),
+                    Text('$count', style: theme.textTheme.bodyMedium),
+                  ],
+                ),
               ),
             ),
           ),
           Expanded(child: _grid()),
           if (_busy) const LinearProgressIndicator(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: Text(
-              _addNote(),
-              key: const Key('add-note'),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
+          _addNote(theme),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: FilledButton.icon(
-              key: const Key('add-photo'),
+            child: IconButton.filled(
+              key: const Key('detail-retake'),
               onPressed: _busy ? null : _addPhoto,
               // Camera, never a picker: see the class docstring.
-              icon: const Icon(Icons.photo_camera),
-              label: const Text('Take another photo'),
+              icon: const Icon(
+                Icons.add_a_photo,
+                semanticLabel: 'Take another photo',
+              ),
             ),
           ),
         ],
@@ -140,29 +143,59 @@ class _CleanDetailScreenState extends State<CleanDetailScreen> {
   /// entry is signed and closed, so a photo added afterwards lives only on
   /// this phone. Letting the counts silently diverge would leave you with a
   /// clean that says 6 here and 5 on the PC and no way to know why.
-  String _addNote() => switch (_session.status) {
-    SessionStatus.accepted =>
-      "The PC's record of this clean is closed — new photos stay on this "
-          'phone.',
-    SessionStatus.queued =>
-      'This clean has not reached the PC yet, so new photos go with it.',
-    SessionStatus.selfLogged => 'Your own record; it never goes to the PC.',
-    SessionStatus.rejected =>
-      'The PC did not record this clean; new photos stay on this phone.',
-    SessionStatus.draft => '',
-  };
+  ///
+  /// Shown as where a new photo will end up: a padlocked PC plus a phone
+  /// (record closed, stays here), an upload arrow (goes with it), or a phone
+  /// alone (never leaves). The sentence is the spoken label only.
+  Widget _addNote(ThemeData theme) {
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final (icons, spoken) = switch (_session.status) {
+      SessionStatus.accepted => (
+        const [Icons.lock, Icons.computer, Icons.phone_android],
+        "The PC's record of this clean is closed — new photos stay on this "
+            'phone.',
+      ),
+      SessionStatus.queued => (
+        const [Icons.cloud_upload],
+        'This clean has not reached the PC yet, so new photos go with it.',
+      ),
+      SessionStatus.selfLogged => (
+        const [Icons.bookmark_added_outlined, Icons.phone_android],
+        'Your own record; it never goes to the PC.',
+      ),
+      SessionStatus.rejected => (
+        const [Icons.info_outline, Icons.phone_android],
+        'The PC did not record this clean; new photos stay on this phone.',
+      ),
+      SessionStatus.draft => (const <IconData>[], ''),
+    };
+    return Semantics(
+      label: spoken,
+      excludeSemantics: true,
+      child: Row(
+        key: Key('add-note-${_session.status.name}'),
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (final icon in icons)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Icon(icon, size: 20, color: muted),
+            ),
+        ],
+      ),
+    );
+  }
 
   Widget _grid() {
     if (_session.photos.isEmpty) {
       return const Center(
         key: Key('detail-empty'),
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'The photos for this clean have been freed to save space. '
-            'The record of it stays.',
-            textAlign: TextAlign.center,
-          ),
+        child: Icon(
+          Icons.hide_image_outlined,
+          size: 64,
+          semanticLabel:
+              'The photos for this clean have been freed to save space. '
+              'The record of it stays.',
         ),
       );
     }

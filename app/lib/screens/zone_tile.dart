@@ -35,8 +35,10 @@ class ZoneTile extends StatelessWidget {
           ListTile(title: Text(name)),
           ListTile(
             key: const Key('move-earlier'),
-            leading: const Icon(Icons.arrow_upward),
-            title: const Text('Earlier in the rotation'),
+            leading: const Icon(
+              Icons.arrow_upward,
+              semanticLabel: 'Earlier in the rotation',
+            ),
             enabled: onMoveEarlier != null,
             onTap: () {
               Navigator.of(sheet).pop();
@@ -45,8 +47,10 @@ class ZoneTile extends StatelessWidget {
           ),
           ListTile(
             key: const Key('move-later'),
-            leading: const Icon(Icons.arrow_downward),
-            title: const Text('Later in the rotation'),
+            leading: const Icon(
+              Icons.arrow_downward,
+              semanticLabel: 'Later in the rotation',
+            ),
             enabled: onMoveLater != null,
             onTap: () {
               Navigator.of(sheet).pop();
@@ -77,7 +81,7 @@ class ZoneTile extends StatelessWidget {
             IconButton(
               key: Key('remove-$name'),
               visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.close),
+              icon: Icon(Icons.close, semanticLabel: 'Remove $name'),
               onPressed: onRemove,
             ),
           ],

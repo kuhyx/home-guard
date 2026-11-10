@@ -1,6 +1,7 @@
 import 'package:design_system/design_system.dart' show FitGrid;
 import 'package:flutter/material.dart';
-import 'package:home_guard_app/ui/theme.dart';
+import 'package:home_guard_app/screens/home_cue.dart';
+import 'package:home_guard_app/screens/home_header.dart';
 
 /// Where the home screen is in the capture flow.
 ///
@@ -42,7 +43,7 @@ class HomeBody extends StatelessWidget {
     required this.zones,
     required this.selectedZone,
     required this.photoCount,
-    required this.detail,
+    required this.cue,
     required this.assignedZone,
     required this.onZoneSelected,
     required this.onTakePhoto,
@@ -64,8 +65,8 @@ class HomeBody extends StatelessWidget {
   /// How many photos this clean has so far.
   final int photoCount;
 
-  /// Status detail for the current phase.
-  final String detail;
+  /// Status note for the current phase, shown as an icon.
+  final HomeCue cue;
 
   /// The zone the PC is waiting on, when it has said. Decoration only --
   /// never a precondition for the camera.
@@ -91,74 +92,33 @@ class HomeBody extends StatelessWidget {
       phase == HomePhase.capturing ||
       phase == HomePhase.uploading;
 
-  String _headline() => switch (phase) {
-    HomePhase.loading => 'Loading…',
-    HomePhase.notConfigured => 'Not connected',
-    HomePhase.accepted => 'Done — the PC took it',
-    HomePhase.savedOffline => 'Saved on this phone',
-    _ => selectedZone ?? 'Pick a place',
-  };
-
-  String _hint() => switch (phase) {
-    HomePhase.ready when photoCount == 0 =>
-      'Clean it, then take as many photos as it takes.',
-    HomePhase.ready => '$photoCount photo${photoCount == 1 ? '' : 's'} so far.',
-    HomePhase.capturing => 'Camera open…',
-    HomePhase.uploading => 'Sending to the PC…',
-    _ => '',
-  };
-
-  Color _statusColor(BuildContext context) {
-    final status = Theme.of(context).extension<AppStatusColors>()!;
-    return switch (phase) {
-      HomePhase.accepted => status.success,
-      HomePhase.savedOffline => status.warning,
-      HomePhase.notConfigured => Theme.of(context).colorScheme.error,
-      _ => Theme.of(context).colorScheme.onSurfaceVariant,
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
-          Text(
-            _headline(),
-            key: const Key('headline'),
-            textAlign: TextAlign.center,
-            style: text.displaySmall,
+          HomeHeader(
+            phase: phase,
+            selectedZone: selectedZone,
+            photoCount: photoCount,
+            cue: cue,
+            assignedZone: assignedZone,
           ),
-          const SizedBox(height: 8),
-          Text(_hint(), textAlign: TextAlign.center, style: text.bodyLarge),
-          const SizedBox(height: 12),
-          Text(
-            detail,
-            key: const Key('detail'),
-            textAlign: TextAlign.center,
-            style: text.bodyMedium?.copyWith(color: _statusColor(context)),
-          ),
-          const SizedBox(height: 16),
-          if (assignedZone != null && phase == HomePhase.ready)
-            Text(
-              'The PC is waiting on $assignedZone',
-              key: const Key('assigned'),
-              textAlign: TextAlign.center,
-              style: text.bodySmall,
-            ),
           Expanded(child: _zonePicker(context)),
           if (_busy) const LinearProgressIndicator(),
           const SizedBox(height: 8),
           if (phase == HomePhase.ready)
-            FilledButton.icon(
+            FilledButton(
               key: const Key('take-photo'),
               onPressed: _busy || selectedZone == null ? null : onTakePhoto,
-              icon: const Icon(Icons.photo_camera),
-              label: Text(photoCount == 0 ? 'Take a photo' : 'Another photo'),
+              child: Icon(
+                photoCount == 0 ? Icons.photo_camera : Icons.add_a_photo,
+                semanticLabel: photoCount == 0
+                    ? 'Take a photo'
+                    : 'Another photo',
+              ),
             ),
           if (phase == HomePhase.ready && photoCount > 0) ...[
             const SizedBox(height: 8),
@@ -166,27 +126,32 @@ class HomeBody extends StatelessWidget {
               key: const Key('finish'),
               onPressed: _busy ? null : onFinish,
               icon: const Icon(Icons.check),
+              // The count is a number, not a word: it shows what "done"
+              // will send.
               label: Text(
-                'Done — $photoCount photo'
-                '${photoCount == 1 ? '' : 's'}',
+                '$photoCount',
+                semanticsLabel:
+                    'Done — $photoCount photo${photoCount == 1 ? '' : 's'}',
               ),
             ),
           ],
           if (phase == HomePhase.notConfigured)
-            FilledButton(
+            IconButton.filledTonal(
               key: const Key('open-settings'),
               onPressed: onOpenSettings,
-              child: const Text('Connect Firebase'),
+              icon: const Icon(
+                Icons.settings,
+                semanticLabel: 'Connect Firebase',
+              ),
             ),
           const SizedBox(height: 8),
-          TextButton.icon(
+          IconButton(
             key: const Key('open-history'),
             onPressed: onOpenHistory,
             // Deliberately NOT Icons.photo_library: camera-only capture is
             // load-bearing security and a gallery icon anywhere in this app
             // is asserted against.
-            icon: const Icon(Icons.history),
-            label: const Text('Past cleans'),
+            icon: const Icon(Icons.history, semanticLabel: 'Past cleans'),
           ),
         ],
       ),

@@ -60,7 +60,13 @@ void main() {
       files: files,
     );
     expect(find.text('mirror'), findsOneWidget);
-    expect(find.textContaining('1 photo'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('detail-subtitle')),
+        matching: find.text('1'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('renders a tile per photo', (tester) async {
@@ -102,10 +108,16 @@ void main() {
       session: _session(photos: [const SessionPhoto(name: 'a.jpg', bytes: 3)]),
       files: files,
     );
-    await tester.tap(find.byKey(const Key('add-photo')));
+    await tester.tap(find.byKey(const Key('detail-retake')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('2 photos'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('detail-subtitle')),
+        matching: find.text('2'),
+      ),
+      findsOneWidget,
+    );
     final stored = (await store.load()).single;
     expect(stored.photoCount, 2);
     expect(files.photos.length, 2);
@@ -122,7 +134,7 @@ void main() {
       ),
       files: files,
     );
-    await tester.tap(find.byKey(const Key('add-photo')));
+    await tester.tap(find.byKey(const Key('detail-retake')));
     await tester.pumpAndSettle();
     expect((await store.load()).single.photoNames, ['s1-05.jpg', 's1-06.jpg']);
   });
@@ -135,7 +147,7 @@ void main() {
       files: files,
       capture: () => null,
     );
-    await tester.tap(find.byKey(const Key('add-photo')));
+    await tester.tap(find.byKey(const Key('detail-retake')));
     await tester.pumpAndSettle();
     expect(await store.load(), isEmpty);
   });
@@ -143,7 +155,7 @@ void main() {
   testWidgets('a clean whose photos were freed says so', (tester) async {
     await _pump(tester, session: _session(), files: FakeSessionFiles());
     expect(find.byKey(const Key('detail-empty')), findsOneWidget);
-    expect(find.textContaining('record of it stays'), findsOneWidget);
+    expect(find.byIcon(Icons.hide_image_outlined), findsOneWidget);
   });
 
   testWidgets('it says where an added photo will go, before you tap', (
@@ -153,8 +165,9 @@ void main() {
     // Letting the counts diverge silently would leave a clean reading 6 here
     // and 5 on the PC with no way to know why.
     await _pump(tester, session: _session(), files: FakeSessionFiles());
+    expect(find.byKey(const Key('add-note-accepted')), findsOneWidget);
     expect(
-      find.textContaining("PC's record of this clean is closed"),
+      find.bySemanticsLabel(RegExp("PC's record of this clean is closed")),
       findsOneWidget,
     );
   });
@@ -167,7 +180,7 @@ void main() {
       session: _session(status: SessionStatus.queued),
       files: FakeSessionFiles(),
     );
-    expect(find.textContaining('new photos go with it'), findsOneWidget);
+    expect(find.byKey(const Key('add-note-queued')), findsOneWidget);
   });
 
   testWidgets('a self-logged clean says it never goes to the PC', (
@@ -178,7 +191,7 @@ void main() {
       session: _session(status: SessionStatus.selfLogged),
       files: FakeSessionFiles(),
     );
-    expect(find.textContaining('never goes to the PC'), findsOneWidget);
+    expect(find.byKey(const Key('add-note-selfLogged')), findsOneWidget);
   });
 
   testWidgets('there is no gallery affordance on the detail screen', (
@@ -194,6 +207,6 @@ void main() {
     );
     expect(find.byIcon(Icons.photo_library), findsNothing);
     expect(find.textContaining('gallery'), findsNothing);
-    expect(find.byIcon(Icons.photo_camera), findsOneWidget);
+    expect(find.byIcon(Icons.add_a_photo), findsOneWidget);
   });
 }

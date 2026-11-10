@@ -41,8 +41,7 @@ Future<SessionStore> _pump(
           openClient: () async => _zonesRemote(),
           clock: () => _now,
         ),
-        capture: () async =>
-            (capture ?? () => Uint8List.fromList([1, 2, 3]))(),
+        capture: () async => (capture ?? () => Uint8List.fromList([1, 2, 3]))(),
         clock: () => _now,
       ),
     ),
@@ -62,11 +61,9 @@ void main() {
 
   testWidgets('saving is blocked until there is a photo', (tester) async {
     await _pump(tester);
-    final save = tester.widget<OutlinedButton>(
-      find.byKey(const Key('log-save')),
-    );
+    final save = tester.widget<IconButton>(find.byKey(const Key('log-save')));
     expect(save.onPressed, isNull);
-    expect(find.textContaining('at least one photo'), findsOneWidget);
+    expect(find.bySemanticsLabel('Take at least one photo.'), findsOneWidget);
   });
 
   testWidgets('a logged clean is stored as self-logged, never queued', (
@@ -94,7 +91,13 @@ void main() {
     await _pump(tester);
     await tester.tap(find.byKey(const Key('log-add-photo')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('record, not a claim'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('log-detail')),
+        matching: find.byIcon(Icons.phone_android),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the zone cannot change once photos exist', (tester) async {

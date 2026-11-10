@@ -15,24 +15,25 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(
+        title: const Icon(Icons.settings, semanticLabel: 'Settings'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           ListTile(
-            key: const Key('open-zones'),
+            key: const Key('settings-zones'),
             contentPadding: EdgeInsets.zero,
-            title: const Text('Zones'),
-            subtitle: const Text('The places you clean, in rotation order'),
+            leading: const Icon(Icons.place, semanticLabel: 'Zones'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push<void>(
               MaterialPageRoute(builder: (_) => const ZonesScreen()),
             ),
           ),
           ListTile(
+            key: const Key('settings-sync'),
             contentPadding: EdgeInsets.zero,
-            title: const Text('Sync settings'),
-            subtitle: const Text('Firebase sync'),
+            leading: const Icon(Icons.sync, semanticLabel: 'Sync settings'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push<void>(
               MaterialPageRoute(

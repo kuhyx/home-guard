@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:design_system/design_system.dart' show FitGrid;
 import 'package:flutter/material.dart';
 import 'package:home_guard_app/models/zone_history.dart';
+import 'package:home_guard_app/screens/zone_cue.dart';
 import 'package:home_guard_app/screens/zone_tile.dart';
 import 'package:home_guard_app/services/zone_sync.dart';
 
@@ -30,7 +31,7 @@ class _ZonesScreenState extends State<ZonesScreen> {
   List<String> _zones = [];
   ZoneSource _source = ZoneSource.fallback;
   bool _loading = true;
-  String _detail = '';
+  ZoneCue _cue = ZoneCue.fallback;
 
   @override
   void initState() {
@@ -51,11 +52,10 @@ class _ZonesScreenState extends State<ZonesScreen> {
       _zones = List<String>.from(read.zonesForDay(_sync.today()));
       _source = read.source;
       _loading = false;
-      _detail = switch (read.source) {
-        ZoneSource.synced => 'Up to date with the PC.',
-        ZoneSource.cached =>
-          'Showing the last rotation seen; the PC is offline.',
-        ZoneSource.fallback => 'No rotation yet — these are the defaults.',
+      _cue = switch (read.source) {
+        ZoneSource.synced => ZoneCue.synced,
+        ZoneSource.cached => ZoneCue.cached,
+        ZoneSource.fallback => ZoneCue.fallback,
       };
     });
   }
@@ -63,15 +63,13 @@ class _ZonesScreenState extends State<ZonesScreen> {
   Future<void> _save(List<String> zones) async {
     setState(() {
       _zones = zones;
-      _detail = 'Saving…';
+      _cue = ZoneCue.saving;
     });
     final published = await _sync.setZones(zones);
     if (!mounted) return;
     setState(() {
       _source = published ? ZoneSource.synced : ZoneSource.cached;
-      _detail = published
-          ? 'Saved and sent to the PC.'
-          : 'Saved on this phone. It will reach the PC when you have signal.';
+      _cue = published ? ZoneCue.sent : ZoneCue.savedLocal;
     });
   }
 
@@ -87,7 +85,7 @@ class _ZonesScreenState extends State<ZonesScreen> {
 
   void _removeAt(int index) {
     if (_zones.length == 1) {
-      setState(() => _detail = 'A rotation needs at least one zone.');
+      setState(() => _cue = ZoneCue.needOne);
       return;
     }
     final next = [..._zones]..removeAt(index);
@@ -101,7 +99,7 @@ class _ZonesScreenState extends State<ZonesScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Zones')),
+      appBar: AppBar(title: const Icon(Icons.place, semanticLabel: 'Zones')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -118,13 +116,7 @@ class _ZonesScreenState extends State<ZonesScreen> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _detail,
-                          key: const Key('zones-detail'),
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ),
+                      ZoneCueIcon(_cue),
                     ],
                   ),
                 ),
@@ -154,22 +146,26 @@ class _ZonesScreenState extends State<ZonesScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          key: const Key('zone-input'),
-                          controller: _controller,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(
-                            labelText: 'Add a place you clean',
-                            hintText: 'mirror',
+                        child: MergeSemantics(
+                          child: Semantics(
+                            label: 'Add a place you clean',
+                            child: TextField(
+                              key: const Key('zone-input'),
+                              controller: _controller,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: const InputDecoration(
+                                prefixIcon: Icon(Icons.add_location_alt),
+                              ),
+                              onSubmitted: (_) => _add(),
+                            ),
                           ),
-                          onSubmitted: (_) => _add(),
                         ),
                       ),
                       const SizedBox(width: 8),
                       FilledButton(
                         key: const Key('zone-add'),
                         onPressed: _add,
-                        child: const Text('Add'),
+                        child: const Icon(Icons.add, semanticLabel: 'Add'),
                       ),
                     ],
                   ),

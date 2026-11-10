@@ -6,6 +6,7 @@ import 'package:home_guard_app/models/challenge.dart';
 import 'package:home_guard_app/models/clean_session.dart';
 import 'package:home_guard_app/screens/history_screen.dart';
 import 'package:home_guard_app/screens/home_body.dart';
+import 'package:home_guard_app/screens/home_cue.dart';
 import 'package:home_guard_app/screens/settings_screen.dart';
 import 'package:home_guard_app/services/camera_capture.dart';
 import 'package:home_guard_app/services/challenge_sync.dart';
@@ -74,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selected;
   String? _assigned;
   CleanSession? _session;
-  String _detail = '';
+  HomeCue _cue = HomeCue.none;
 
   @override
   void initState() {
@@ -105,10 +106,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ? challenge!.zone
           : names.firstOrNull;
       _phase = HomePhase.ready;
-      _detail = switch (read.source) {
-        ZoneSource.synced => '',
-        ZoneSource.cached => 'Offline — using the last rotation the PC sent.',
-        ZoneSource.fallback => 'Offline — using the default rotation.',
+      _cue = switch (read.source) {
+        ZoneSource.synced => HomeCue.none,
+        ZoneSource.cached => HomeCue.offlineCached,
+        ZoneSource.fallback => HomeCue.offlineDefault,
       };
     });
     unawaited(_drain());
@@ -125,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final raw = await _capture();
     if (!mounted) return;
     if (raw == null) {
-      _set(HomePhase.ready, detail: 'No photo taken.');
+      _set(HomePhase.ready, cue: HomeCue.noPhoto);
       return;
     }
     try {
@@ -133,7 +134,8 @@ class _HomeScreenState extends State<HomeScreen> {
       // still in the user's hand, not at upload time hours later.
       _encode(raw);
     } on Object catch (e) {
-      _set(HomePhase.ready, detail: 'Could not use that photo: $e');
+      debugPrint('home-guard: photo rejected: $e');
+      _set(HomePhase.ready, cue: HomeCue.badPhoto);
       return;
     }
     final session = _session ?? _newSession(zone);
@@ -142,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _session = updated;
       _phase = HomePhase.ready;
-      _detail = '';
+      _cue = HomeCue.none;
     });
   }
 
@@ -169,12 +171,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _session = null;
       if (report.uploaded > 0) {
         _phase = HomePhase.accepted;
-        _detail =
-            'The PC recorded ${session.photoCount} photo'
-            '${session.photoCount == 1 ? '' : 's'} of ${session.zone}.';
+        _cue = HomeCue.recorded;
       } else {
         _phase = HomePhase.savedOffline;
-        _detail = 'Saved here. It will reach the PC next time both are on.';
+        _cue = HomeCue.savedOffline;
       }
     });
   }
@@ -191,11 +191,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return await queue.drain();
   }
 
-  void _set(HomePhase phase, {String detail = ''}) {
+  void _set(HomePhase phase, {HomeCue cue = HomeCue.none}) {
     if (!mounted) return;
     setState(() {
       _phase = phase;
-      _detail = detail;
+      _cue = cue;
     });
   }
 
@@ -216,17 +216,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('home-guard'),
         actions: [
           IconButton(
-            key: const Key('refresh'),
-            tooltip: 'Check the PC again',
-            icon: const Icon(Icons.refresh),
+            key: const Key('home-recheck'),
+            icon: const Icon(
+              Icons.refresh,
+              semanticLabel: 'Check the PC again',
+            ),
             onPressed: _refresh,
           ),
           IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings),
+            key: const Key('home-settings'),
+            icon: const Icon(Icons.settings, semanticLabel: 'Settings'),
             onPressed: _openSettings,
           ),
         ],
@@ -236,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
         zones: _zoneNames,
         selectedZone: _selected,
         photoCount: _session?.photoCount ?? 0,
-        detail: _detail,
+        cue: _cue,
         assignedZone: _assigned,
         onZoneSelected: (z) => setState(() => _selected = z),
         onTakePhoto: _takePhoto,

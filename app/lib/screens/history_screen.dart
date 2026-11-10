@@ -42,12 +42,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     final store = widget.store;
     return Scaffold(
-      appBar: AppBar(title: const Text('Past cleans')),
-      floatingActionButton: FloatingActionButton.extended(
+      key: const Key('history-screen'),
+      appBar: AppBar(
+        title: const Icon(Icons.history, semanticLabel: 'Past cleans'),
+      ),
+      floatingActionButton: FloatingActionButton(
         key: const Key('log-a-clean'),
         onPressed: () => unawaited(_open(LogCleanScreen(store: store))),
-        icon: const Icon(Icons.add),
-        label: const Text('Log a clean'),
+        child: const Icon(Icons.add, semanticLabel: 'Log a clean'),
       ),
       body: FutureBuilder<List<CleanSession>>(
         key: ValueKey(_reload),
@@ -60,7 +62,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
           if (sessions.isEmpty) {
             return const Center(
               key: Key('history-empty'),
-              child: Text('Nothing recorded yet.'),
+              child: Icon(
+                Icons.inbox_outlined,
+                size: 64,
+                semanticLabel: 'Nothing recorded yet.',
+              ),
             );
           }
           // Bottom gap keeps the last row clear of the floating button.
@@ -124,12 +130,28 @@ class _Tile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
               ),
-              Text(
-                [
-                  session.day.replaceFirst(RegExp(r'^\d{4}-'), ''),
+              Semantics(
+                label: [
+                  session.day,
                   if (count > 0) '$count photo${count == 1 ? '' : 's'}',
                 ].join(' · '),
-                style: theme.textTheme.bodySmall,
+                excludeSemantics: true,
+                child: Wrap(
+                  key: Key('history-meta-${session.id}'),
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 4,
+                  children: [
+                    Text(
+                      session.day.replaceFirst(RegExp(r'^\d{4}-'), ''),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    if (count > 0) ...[
+                      const Icon(Icons.photo_camera, size: 14),
+                      Text('$count', style: theme.textTheme.bodySmall),
+                    ],
+                  ],
+                ),
               ),
             ],
           ),

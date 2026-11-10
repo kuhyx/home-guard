@@ -104,9 +104,7 @@ class CleanSession {
       zone: zone,
       capturedAt: capturedAt,
       day: day,
-      photos: [
-        for (final raw in photos) ?SessionPhoto.fromJson(raw),
-      ],
+      photos: [for (final raw in photos) ?SessionPhoto.fromJson(raw)],
       status: SessionStatus.values.firstWhere(
         (s) => s.name == status,
         orElse: () => SessionStatus.queued,

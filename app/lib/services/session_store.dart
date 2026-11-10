@@ -40,11 +40,9 @@ class SessionStore {
       return [];
     }
     if (decoded is! List) return [];
-    final sessions = decoded
-        .map(CleanSession.fromJson)
-        .whereType<CleanSession>()
-        .toList()
-      ..sort((a, b) => b.capturedAt.compareTo(a.capturedAt));
+    final sessions =
+        decoded.map(CleanSession.fromJson).whereType<CleanSession>().toList()
+          ..sort((a, b) => b.capturedAt.compareTo(a.capturedAt));
     return sessions;
   }
 
@@ -105,7 +103,10 @@ class SessionStore {
   /// Sessions waiting to reach the PC, oldest first.
   Future<List<CleanSession>> queued() async {
     final all = await load();
-    return all.where((s) => s.status == SessionStatus.queued).toList().reversed
+    return all
+        .where((s) => s.status == SessionStatus.queued)
+        .toList()
+        .reversed
         .toList();
   }
 

@@ -12,11 +12,11 @@ void main() {
     installFakeSecureStorage();
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
 
-    expect(find.text('Sync settings'), findsOneWidget);
+    expect(find.byKey(const Key('settings-sync')), findsOneWidget);
     // Firebase-only app: no GitHub mirror entry, by rule.
     expect(find.textContaining('GitHub'), findsNothing);
 
-    await tester.tap(find.text('Sync settings'));
+    await tester.tap(find.byKey(const Key('settings-sync')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.byType(SyncSettingsScreen), findsOneWidget);

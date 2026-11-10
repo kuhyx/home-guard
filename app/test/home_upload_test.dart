@@ -116,8 +116,8 @@ void main() {
     await tester.tap(find.byKey(const Key('finish')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Saved on this phone'), findsOneWidget);
-    expect(find.textContaining('will reach the PC'), findsOneWidget);
+    expect(find.byKey(const Key('headline-savedOffline')), findsOneWidget);
+    expect(find.byKey(const Key('cue-savedOffline')), findsOneWidget);
     expect((await store.load()).single.status, SessionStatus.queued);
   });
 
@@ -131,7 +131,7 @@ void main() {
     await tester.tap(find.byKey(const Key('finish')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Done — the PC took it'), findsOneWidget);
+    expect(find.byKey(const Key('headline-accepted')), findsOneWidget);
     expect(remote.puts, contains(kEvidencePath));
     expect((await store.load()).single.status, SessionStatus.accepted);
   });
@@ -148,7 +148,7 @@ void main() {
     await tester.tap(find.byKey(const Key('finish')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Saved on this phone'), findsOneWidget);
+    expect(find.byKey(const Key('headline-savedOffline')), findsOneWidget);
     expect((await store.load()).single.status, SessionStatus.queued);
   });
 

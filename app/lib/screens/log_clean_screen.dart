@@ -119,7 +119,12 @@ class _LogCleanScreenState extends State<LogCleanScreen> {
   Widget build(BuildContext context) {
     final count = _session?.photoCount ?? 0;
     return Scaffold(
-      appBar: AppBar(title: const Text('Log a clean')),
+      appBar: AppBar(
+        title: const Icon(
+          Icons.cleaning_services,
+          semanticLabel: 'Log a clean',
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -130,7 +135,6 @@ class _LogCleanScreenState extends State<LogCleanScreen> {
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.event),
               title: Text(Challenge.dayOf(_day)),
-              subtitle: const Text('When you cleaned it'),
               trailing: const Icon(Icons.edit),
               onTap: _pickDay,
             ),
@@ -154,28 +158,50 @@ class _LogCleanScreenState extends State<LogCleanScreen> {
                 ),
               ),
             ),
-            Text(
-              count == 0
+            // Camera + count, and a phone glyph: the record stays here and
+            // never claims the gate. Nothing until the first photo, since the
+            // disabled save button already says "not yet".
+            Semantics(
+              label: count == 0
                   ? 'Take at least one photo.'
                   : '$count photo${count == 1 ? '' : 's'}. Stays on the '
                         'phone — a record, not a claim on the gate.',
-              key: const Key('log-detail'),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
+              excludeSemantics: true,
+              child: Row(
+                key: const Key('log-detail'),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (count > 0) ...[
+                    const Icon(Icons.photo_camera, size: 20),
+                    const SizedBox(width: 6),
+                    Text('$count'),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.phone_android, size: 20),
+                  ],
+                ],
+              ),
             ),
             const SizedBox(height: 8),
             if (_busy) const LinearProgressIndicator(),
-            FilledButton.icon(
+            FilledButton(
               key: const Key('log-add-photo'),
               onPressed: _busy || _zone == null ? null : _addPhoto,
-              icon: const Icon(Icons.photo_camera),
-              label: Text(count == 0 ? 'Take a photo' : 'Another photo'),
+              child: Icon(
+                count == 0 ? Icons.photo_camera : Icons.add_a_photo,
+                semanticLabel: count == 0 ? 'Take a photo' : 'Another photo',
+              ),
             ),
             const SizedBox(height: 8),
-            OutlinedButton(
+            IconButton(
               key: const Key('log-save'),
               onPressed: count == 0 || _busy ? null : _save,
-              child: const Text('Save this clean'),
+              icon: const Icon(Icons.check, semanticLabel: 'Save this clean'),
+              style: IconButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                foregroundColor: Theme.of(
+                  context,
+                ).colorScheme.onPrimaryContainer,
+              ),
             ),
           ],
         ),

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:crdt_sync/crdt_sync.dart';
+import 'package:design_system/design_system.dart' show FitGrid;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:home_guard_app/screens/home_screen.dart';
@@ -69,10 +70,14 @@ void main() {
     await tester.tap(find.byKey(const Key('open-history')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('desk'));
+    await tester.tap(
+      find
+          .descendant(of: find.byType(FitGrid), matching: find.byType(Material))
+          .first,
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('detail-subtitle')), findsOneWidget);
-    expect(find.byKey(const Key('add-photo')), findsOneWidget);
+    expect(find.byKey(const Key('detail-retake')), findsOneWidget);
   });
 
   testWidgets('history offers logging a past clean', (tester) async {
@@ -100,9 +105,12 @@ void main() {
     await tester.tap(find.byKey(const Key('open-history')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Past cleans'), findsOneWidget);
+    expect(find.byKey(const Key('history-screen')), findsOneWidget);
     expect(find.text('desk'), findsOneWidget);
-    expect(find.textContaining('1 photo'), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(FitGrid), matching: find.text('1')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('history is empty before anything is recorded', (tester) async {
