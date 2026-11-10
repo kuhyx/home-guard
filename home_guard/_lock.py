@@ -31,12 +31,18 @@ from gatelock import (
 
 from home_guard._accept import AcceptResult, process_evidence
 from home_guard._constants import RANK_HOME_GUARD
+from home_guard._escape_dialog import EscapeDialogContext, open_escape_dialog
 from home_guard._escape_hatch import SlotZone, build_tracker
 from home_guard._network_incident import prepare_slot
 from home_guard._paths import HomeGuardPaths
 from home_guard._poller import EvidencePoller, PollerConfig
 from home_guard._sync_evidence import fetch_evidence
-from home_guard._view import EscapeDialogContext, build_surface, open_escape_dialog
+from home_guard._view import (
+    STATUS_OFFLINE,
+    STATUS_REJECTED,
+    STATUS_WAIT,
+    build_surface,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -86,9 +92,9 @@ class HomeGuardGuard:
 
         self.root = GateRoot()
         self.root.on_callback_error = self._handle_callback_error
-        self._zone_var = tk.StringVar(
-            self.root, value=f"Clear the {self._zone} to unlock."
-        )
+        # The zone name alone: it is kuhy's own content, the one word the
+        # lock may paint. The CLI keeps the full sentence (gate_message).
+        self._zone_var = tk.StringVar(self.root, value=self._zone)
         self._status_var = tk.StringVar(self.root, value=self._status_text())
 
         self._arbiter = Arbiter(
@@ -123,9 +129,8 @@ class HomeGuardGuard:
         return process_evidence(payload, paths=self._paths)
 
     def _status_text(self) -> str:
-        if self._published:
-            return "Waiting for a photo from the home-guard app."
-        return "Sync unavailable right now -- retrying, or use the escape hatch below."
+        """The status *icon name*: hourglass while waiting, warning offline."""
+        return STATUS_WAIT if self._published else STATUS_OFFLINE
 
     # -- LockWindowHooks protocol -----------------------------------------
 
@@ -175,7 +180,8 @@ class HomeGuardGuard:
         self.close()
 
     def _on_reject(self, reason: str) -> None:
-        self._status_var.set(f"Last submission rejected: {reason}. Try again.")
+        _logger.info("home-guard submission rejected: %s", reason)
+        self._status_var.set(STATUS_REJECTED)
 
     def close(self) -> None:
         """Release the lock and every hardware/input hold it took."""
