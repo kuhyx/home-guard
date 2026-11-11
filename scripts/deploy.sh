@@ -27,7 +27,9 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly REPO_DIR
 readonly LIVE_REPO="${HOME_GUARD_LIVE_REPO:-$HOME/src/home-guard}"
-readonly SYSTEM_PYTHON="/usr/bin/python3"
+# Overridable only so tests can stand in a stub; the default is what the
+# systemd unit runs.
+readonly SYSTEM_PYTHON="${DEPLOY_PYTHON:-/usr/bin/python3}"
 readonly PHONE_DEPLOY="${PHONE_DEPLOY:-$HOME/.claude/scripts/phone_deploy.sh}"
 readonly SERIAL="${ADB_SERIAL:-23181JEGR08034}"
 readonly PACKAGE="com.kuhy.home_guard"
