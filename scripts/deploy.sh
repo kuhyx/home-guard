@@ -68,10 +68,24 @@ check_desktop() {
     log "desktop OK: $(grep -m1 'due slots today:' <<<"$out")"
 }
 
+# is-enabled printed nothing for one unit once at loadavg 200 (a timed-out
+# D-Bus call), which read as a state change. Retry an empty answer; a unit
+# that still has none fails the run rather than comparing blanks.
+unit_state() {
+    local state="" try
+    for try in 1 2 3 4 5; do
+        state=$(systemctl --user is-enabled "$1" 2>/dev/null || true)
+        [[ -n $state ]] && break
+        sleep "$try"
+    done
+    [[ -n $state ]] || fail units "systemctl gave no is-enabled state for $1"
+    printf '%s' "$state"
+}
+
 unit_states() {
     local unit
     for unit in "${UNITS[@]}"; do
-        printf '%s=%s ' "$unit" "$(systemctl --user is-enabled "$unit" 2>/dev/null || true)"
+        printf '%s=%s ' "$unit" "$(unit_state "$unit")"
     done
 }
 
