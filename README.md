@@ -87,6 +87,7 @@ upload it watches the evidence node until the PC drains it and reports
 
 ```bash
 ~/.claude/scripts/phone_deploy.sh ~/src/home-guard/app --release   # build + install
+scripts/deploy.sh                  # full deploy: desktop + phone, idempotent
 scripts/register_oauth_client.sh   # one-time: Android OAuth client (console)
 scripts/set_release_secrets.sh     # one-time: CI signing secrets
 ```
