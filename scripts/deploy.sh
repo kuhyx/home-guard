@@ -24,6 +24,8 @@
 
 set -euo pipefail
 
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly REPO_DIR
 readonly LIVE_REPO="${HOME_GUARD_LIVE_REPO:-$HOME/src/home-guard}"
 readonly SYSTEM_PYTHON="/usr/bin/python3"
 readonly PHONE_DEPLOY="${PHONE_DEPLOY:-$HOME/.claude/scripts/phone_deploy.sh}"
@@ -116,13 +118,17 @@ installed_version_name() {
     sed -n '/^ *versionName=/{s///;p;q}' <<<"$dump"
 }
 
+# Board sessions may not touch the Pixel at all (phone_deploy exits 46 from
+# its first stage), so the build-only path calls flutter directly on the
+# checkout this script lives in. Without key.properties the APK is
+# debug-signed: fine for an emulator check, never installed over the Pixel.
 build_apk() {
-    local stage
-    for stage in prep dart kotlin assemble; do
-        log "phone: release build stage $stage"
-        "$PHONE_DEPLOY" "$LIVE_REPO/app" --release --stage "$stage" \
-            || fail "phone-$stage" "phone_deploy.sh --stage $stage"
-    done
+    local app="$REPO_DIR/app" apk
+    apk="$app/build/app/outputs/flutter-apk/app-release.apk"
+    log "phone: release build of $app (no install)"
+    (cd "$app" && flutter build apk --release) || fail phone-build "flutter build apk --release"
+    [[ -s $apk ]] || fail phone-build "no APK at $apk"
+    log "phone build OK: $apk"
 }
 
 deploy_phone() {
