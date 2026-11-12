@@ -56,9 +56,9 @@ Future<RemoteStore?> openEncryptedFirebase({
 /// The library's one-time copy merges the old prefix's CRDT logs into the
 /// new one. home-guard has none: its nodes are plain JSON transport blobs,
 /// so the only thing the copy could ever pick up is the drained `{}`
-/// evidence node (it parses as an empty log). crdt_sync_dart < 0.14.1 (this
-/// app is on 0.14.0 until crdt_sync_flutter re-pins) merges that onto a
-/// pending upload, wiping the photos and faking the PC's "accepted" signal.
+/// evidence node (it parses as an empty log). crdt_sync_dart < 0.14.1
+/// merged that onto a pending upload, wiping the photos and faking the PC's
+/// "accepted" signal; 0.14.1 skips it, so this stays as belt and braces.
 /// Hiding the old prefix makes the copy a no-op; the old data stays put.
 class _NoLegacyCopy implements RemoteStore {
   _NoLegacyCopy(this._inner);
