@@ -2,7 +2,7 @@
 library;
 
 /// One `(day, slot)` challenge as the PC publishes it to
-/// `home-guard-sync/challenge/current.json`.
+/// `home-guard-sync-e2e/challenge/current.json`.
 ///
 /// Every field is carried **verbatim** back in the evidence upload. The PC
 /// compares `token` and `zone` by exact string equality against its own

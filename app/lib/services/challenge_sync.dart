@@ -12,15 +12,15 @@ import 'dart:developer' as developer;
 
 import 'package:crdt_sync/crdt_sync.dart';
 import 'package:home_guard_app/models/challenge.dart';
-import 'package:home_guard_app/services/firebase_backend.dart';
+import 'package:home_guard_app/services/e2e_sync.dart';
 import 'package:home_guard_app/services/photo_encoder.dart';
 
 /// RTDB paths, identical to `home_guard/_constants.py`. Logical paths with
 /// the `.json` suffix intact: both clients escape `.` the same way.
-const kChallengePath = 'home-guard-sync/challenge/current.json';
+const kChallengePath = '$kSyncPrefix/challenge/current.json';
 
 /// Where the phone writes and the PC drains.
-const kEvidencePath = 'home-guard-sync/evidence/current.json';
+const kEvidencePath = '$kSyncPrefix/evidence/current.json';
 
 /// Outcome of a read or write, for the screen to render.
 enum SyncOutcome {
@@ -58,7 +58,7 @@ class ChallengeSync {
   ChallengeSync({
     Future<RemoteStore?> Function()? openClient,
     DateTime Function()? clock,
-  }) : _openClient = openClient ?? openFirebase,
+  }) : _openClient = openClient ?? openEncryptedFirebase,
        _clock = clock ?? DateTime.now;
 
   final Future<RemoteStore?> Function() _openClient;

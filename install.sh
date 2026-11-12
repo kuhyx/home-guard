@@ -42,7 +42,7 @@ verify_imports() {
     # interpreter systemd will launch, not for whatever is on $PATH now.
     log "verifying imports with $SYSTEM_PYTHON"
     "$SYSTEM_PYTHON" -c \
-        "import home_guard, gatelock, crdt_sync, freedays; print('imports OK')" \
+        "import home_guard, gatelock, crdt_sync, freedays, nacl, argon2; print('imports OK')" \
         || fail "a runtime dependency is missing from the system python"
 }
 

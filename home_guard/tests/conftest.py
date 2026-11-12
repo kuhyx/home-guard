@@ -43,6 +43,26 @@ def _isolate_free_days(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     )
 
 
+@pytest.fixture(autouse=True)
+def _isolate_e2e_passphrase(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Never read the real ``~/.config/crdt-sync/password``; cheap Argon2.
+
+    ``get_sync_client`` reads the shared passphrase and derives a key with
+    Argon2id. A test reaching it without this would read kuhy's real secret.
+    """
+    from crdt_sync import Argon2Params, reset_e2e_copy_memo
+
+    import home_guard._sync_client as sync_client_module
+
+    reset_e2e_copy_memo()
+    monkeypatch.setattr(sync_client_module, "_read_passphrase", lambda: "test-pass")
+    monkeypatch.setattr(
+        sync_client_module,
+        "ARGON2_PARAMS",
+        Argon2Params(memory_kib=8, iterations=1, parallelism=1),
+    )
+
+
 @pytest.fixture
 def xvfb_display(tmp_path: Path) -> Iterator[dict[str, str]]:
     """Start an isolated Xvfb server; yield the env vars a Tk test needs.

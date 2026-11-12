@@ -49,10 +49,15 @@ update_checkout() {
     git -C "$LIVE_REPO" pull --ff-only --quiet || fail pull "git pull --ff-only in $LIVE_REPO"
 }
 
+# Imports that only resolve once the pinned deps are installed: the path
+# check alone let a crdt-sync bump (E2E: pynacl, argon2-cffi, 0.10.0's API)
+# skip pip and leave a daemon that cannot import its sync client.
+readonly DEPS_PROBE='import home_guard._sync_client, nacl, argon2'
+
 install_package() {
     local file
     file=$(live_python -c 'import home_guard; print(home_guard.__file__)' 2>/dev/null || true)
-    if [[ $file == "$LIVE_REPO/home_guard/"* ]]; then
+    if [[ $file == "$LIVE_REPO/home_guard/"* ]] && live_python -c "$DEPS_PROBE" 2>/dev/null; then
         log "editable install already points at $LIVE_REPO"
         return
     fi
@@ -63,7 +68,7 @@ install_package() {
 
 check_desktop() {
     local file out
-    live_python -c 'import home_guard, gatelock, crdt_sync, freedays' \
+    live_python -c "import gatelock, crdt_sync, freedays; $DEPS_PROBE" \
         || fail imports "a runtime dependency is missing from $SYSTEM_PYTHON"
     file=$(live_python -c 'import home_guard; print(home_guard.__file__)')
     [[ $file == "$LIVE_REPO/home_guard/"* ]] || fail imports "home_guard resolves to $file"

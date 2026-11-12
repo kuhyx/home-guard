@@ -41,11 +41,11 @@ secret ever reaches the phone.
    authority; RTDB only ever carries a copy in transit. One record per
    `(day, slot)`, minted once — a failed attempt doesn't get a second chance
    at the same slot with a stale photo.
-3. **Published** to `home-guard-sync/challenge/current.json`:
+3. **Published** to `home-guard-sync-e2e/challenge/current.json` (sealed, see "End-to-end encryption"):
    `{day, slot, zone, token, issued_at}`.
 4. Phone fetches that path, shows the zone, and — after an **in-app
    camera-only** photo (no gallery picker; see below) — uploads to
-   `home-guard-sync/evidence/current.json`:
+   `home-guard-sync-e2e/evidence/current.json`:
    `{day, slot, zone, token (echoed verbatim), device_id, captured_at,
    photo_b64, photo_mime}`.
 5. PC's `EvidencePoller` fetches that path off the Tk thread.
@@ -84,3 +84,16 @@ of clearing*, full stop. Neither half is sufficient alone.
   lower JPEG quality before upload; the PC independently rejects anything
   over `MAX_EVIDENCE_PHOTO_BYTES` after decoding, so a stale app build or a
   stray upload can never write an unbounded blob to disk.
+
+## End-to-end encryption
+
+Every node above is sealed (XChaCha20-Poly1305, key from Argon2id over the
+shared crdt-sync passphrase) by crdt_sync's encrypting store, under
+`home-guard-sync-e2e/` with its header at `home-guard-sync-e2e/e2e`. The PC
+reads the passphrase from `~/.config/crdt-sync/password`, the phone from the
+OS keystore (the lock icon in the home app bar enters it). No passphrase or
+a wrong one means no client at all: the PC skips the tick, the phone shows a
+closed lock, and nothing is written in plaintext. The old `home-guard-sync/`
+prefix is left untouched and is not copied: it holds only transport blobs
+(and the library's CRDT-log copy would merge a drained `{}` onto a pending
+upload), so both sides hide it from the copy.

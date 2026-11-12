@@ -2,7 +2,7 @@ name: home_guard_app
 description: "home-guard phone app: shows the zone the PC is waiting on and uploads a camera-only photo echoing the PC's single-use challenge token."
 publish_to: 'none'
 
-version: 1.0.62+1
+version: 1.0.63+1
 
 environment:
   sdk: ^3.12.2
@@ -11,8 +11,15 @@ dependencies:
   crdt_sync:
     git:
       url: https://github.com/kuhyx/utils
-      ref: crdt_sync_dart-v0.12.1
+      ref: crdt_sync_dart-v0.14.0
       path: crdt_sync_dart
+  # E2E: the keystore-backed passphrase, derived-key cache and the text-free
+  # lock button (openEncryptedStoreFromKeystore, E2ePassphraseButton).
+  crdt_sync_flutter:
+    git:
+      url: https://github.com/kuhyx/utils
+      ref: crdt_sync_flutter-v0.8.0
+      path: crdt_sync_flutter
   cupertino_icons: 2.0.0
   # FitGrid: dense paged tiles so main screens never scroll vertically.
   design_system:
@@ -49,7 +56,7 @@ dependencies:
   sync_settings_ui:
     git:
       url: https://github.com/kuhyx/utils
-      ref: sync_settings_ui-v0.7.0
+      ref: sync_settings_ui-v0.7.2
       path: sync_settings_ui
   uuid: 4.6.0
 

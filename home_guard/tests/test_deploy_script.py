@@ -21,6 +21,9 @@ case "$*" in
     *'print(home_guard.__file__)'*)
         echo "$HOME_GUARD_LIVE_REPO/home_guard/__init__.py" ;;
     *'-m home_guard status'*) echo 'due slots today: 0800' ;;
+    *'-m pip install'*) echo pip >> "$HOME/pip.calls" ;;
+    *'import home_guard._sync_client'*)
+        [[ -e "$HOME/pip.calls" ]] || exit "${DEPS_PROBE_EXIT:-0}" ;;
 esac
 """
 _SYSTEMCTL_STUB = "#!/bin/bash\necho masked\n"
@@ -67,7 +70,9 @@ def _lagging_clone(tmp_path: Path) -> tuple[Path, str]:
     return live, _git(seed, "rev-parse", "HEAD")
 
 
-def _run_deploy(tmp_path: Path, live: Path) -> subprocess.CompletedProcess[str]:
+def _run_deploy(
+    tmp_path: Path, live: Path, *, deps_probe_exit: int = 0
+) -> subprocess.CompletedProcess[str]:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     _stub(bin_dir / "systemctl", _SYSTEMCTL_STUB)
@@ -80,6 +85,7 @@ def _run_deploy(tmp_path: Path, live: Path) -> subprocess.CompletedProcess[str]:
         "HOME_GUARD_LIVE_REPO": str(live),
         "DEPLOY_PYTHON": str(_stub(tmp_path / "python3", _PYTHON_STUB)),
         "DISARM_MARKER": str(marker),
+        "DEPS_PROBE_EXIT": str(deps_probe_exit),
     }
     return subprocess.run(
         [_tool("bash"), str(_DEPLOY), "--desktop-only"],
@@ -111,3 +117,27 @@ def test_deploy_fails_named_when_the_pull_cannot_fast_forward(tmp_path: Path) ->
 
     assert done.returncode != 0
     assert "FAILED [pull]" in done.stderr
+
+
+def test_deploy_skips_pip_when_the_live_install_has_its_deps(tmp_path: Path) -> None:
+    live, _ = _lagging_clone(tmp_path)
+
+    done = _run_deploy(tmp_path, live)
+
+    assert done.returncode == 0, done.stderr
+    assert not (tmp_path / "pip.calls").exists()
+
+
+def test_deploy_reinstalls_when_a_bumped_dep_is_missing(tmp_path: Path) -> None:
+    """An editable install pointing at the repo is not enough after a dep bump.
+
+    The crdt-sync E2E bump needs pynacl/argon2-cffi and crdt-sync 0.10.0's
+    API; skipping pip because the path matched would leave a daemon that
+    cannot even import its sync client.
+    """
+    live, _ = _lagging_clone(tmp_path)
+
+    done = _run_deploy(tmp_path, live, deps_probe_exit=1)
+
+    assert done.returncode == 0, done.stderr
+    assert (tmp_path / "pip.calls").read_text(encoding="utf-8") == "pip\n"

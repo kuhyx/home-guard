@@ -9,6 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
+from crdt_sync import E2eLayout
+
 # Arbitration rank. A bare int in THIS module rather than added to
 # gatelock._arbiter, same reasoning leetcode_guard's RANK_LEETCODE_GUARD
 # uses: a number only home-guard needs shouldn't force a version bump/re-pin
@@ -58,8 +60,13 @@ GATE_WINDOW_END_HOUR: Final = 22
 DEFAULT_ZONES: Final = ("desk", "kitchen counter", "entryway")
 
 # Firebase RTDB path prefix (shared kuhy-syncs project, per-app prefix, same
-# pattern as todo/home_inventory/wake-alarm).
-SYNC_PREFIX: Final = "home-guard-sync"
+# pattern as todo/home_inventory/wake-alarm). Every payload is end-to-end
+# encrypted under ``<old>-e2e`` (crdt_sync's ``E2eLayout``); the old plaintext
+# prefix is only ever read, once, by the library's one-time copy, and never
+# deleted by this code. The phone app derives the same paths
+# (``app/lib/services/e2e_sync.dart``).
+SYNC_OLD_PREFIX: Final = "home-guard-sync"
+SYNC_PREFIX: Final = E2eLayout.of(SYNC_OLD_PREFIX).prefix
 SYNC_CHALLENGE_PATH: Final = f"{SYNC_PREFIX}/challenge/current.json"
 SYNC_EVIDENCE_PATH: Final = f"{SYNC_PREFIX}/evidence/current.json"
 

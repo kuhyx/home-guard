@@ -12,11 +12,11 @@ import 'dart:convert';
 import 'package:crdt_sync/crdt_sync.dart';
 import 'package:home_guard_app/models/challenge.dart';
 import 'package:home_guard_app/models/zone_history.dart';
-import 'package:home_guard_app/services/firebase_backend.dart';
+import 'package:home_guard_app/services/e2e_sync.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// RTDB path, identical to `home_guard/_constants.py::SYNC_ZONES_PATH`.
-const kZonesPath = 'home-guard-sync/zones/current.json';
+const kZonesPath = '$kSyncPrefix/zones/current.json';
 
 /// SharedPreferences key for the cached history.
 const kZoneCacheKey = 'home_guard.zones';
@@ -55,7 +55,7 @@ class ZoneSync {
     Future<RemoteStore?> Function()? openClient,
     Future<SharedPreferences> Function()? prefs,
     DateTime Function()? clock,
-  }) : _openClient = openClient ?? openFirebase,
+  }) : _openClient = openClient ?? openEncryptedFirebase,
        _prefs = prefs ?? SharedPreferences.getInstance,
        _clock = clock ?? DateTime.now;
 

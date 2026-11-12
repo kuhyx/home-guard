@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from crdt_sync import ConfigError, FirebaseAuthError
+from crdt_sync import ConfigError, EncryptingStore, FirebaseAuthError
 import pytest
 
 import home_guard._sync_client as sync_client_module
 from home_guard._sync_client import SyncUnavailableError, get_sync_client
+from home_guard.tests.fake_remote_store import FakeRemoteStore
 
 
 def test_config_error_becomes_sync_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -29,9 +30,11 @@ def test_auth_error_becomes_sync_unavailable(monkeypatch: pytest.MonkeyPatch) ->
         get_sync_client()
 
 
-def test_success_path_returns_client(monkeypatch: pytest.MonkeyPatch) -> None:
-    sentinel = object()
-    monkeypatch.setattr(
-        sync_client_module, "firebase_client_for", lambda _app_name: sentinel
-    )
-    assert get_sync_client() is sentinel
+def test_success_path_returns_encrypting_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    inner = FakeRemoteStore()
+    monkeypatch.setattr(sync_client_module, "firebase_client_for", lambda _app: inner)
+    client = get_sync_client()
+    assert isinstance(client, EncryptingStore)
+    assert client is not inner

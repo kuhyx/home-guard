@@ -93,11 +93,20 @@ packages:
     dependency: "direct main"
     description:
       path: crdt_sync_dart
-      ref: "crdt_sync_dart-v0.12.1"
-      resolved-ref: "6641d85f0550ca60433fc8e0d13a3dafdbb664d6"
+      ref: "crdt_sync_dart-v0.14.0"
+      resolved-ref: "84343aec2dd07c38cba40690c3b5f2c84ae9cdf6"
       url: "https://github.com/kuhyx/utils"
     source: git
-    version: "0.12.1"
+    version: "0.14.0"
+  crdt_sync_flutter:
+    dependency: "direct main"
+    description:
+      path: crdt_sync_flutter
+      ref: "crdt_sync_flutter-v0.8.0"
+      resolved-ref: e5990c9c15761934110f955529bc1d68479b06ff
+      url: "https://github.com/kuhyx/utils"
+    source: git
+    version: "0.8.0"
   cross_file:
     dependency: transitive
     description:
@@ -114,6 +123,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.8"
+  cryptography:
+    dependency: transitive
+    description:
+      name: cryptography
+      sha256: "3eda3029d34ec9095a27a198ac9785630fe525c0eb6a49f3d575272f8e792ef0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.9.0"
   cupertino_icons:
     dependency: "direct main"
     description:
@@ -805,11 +822,11 @@ packages:
     dependency: "direct main"
     description:
       path: sync_settings_ui
-      ref: "sync_settings_ui-v0.7.0"
-      resolved-ref: "3084080d744c348a217727e26a6be838e7d5a4ff"
+      ref: "sync_settings_ui-v0.7.2"
+      resolved-ref: "4567e7ca3042e683befdf6697ace1c8be9c829fc"
       url: "https://github.com/kuhyx/utils"
     source: git
-    version: "0.7.0"
+    version: "0.7.2"
   term_glyph:
     dependency: transitive
     description:
@@ -834,6 +851,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+  url_launcher:
+    dependency: transitive
+    description:
+      name: url_launcher
+      sha256: e8cc955c97e06df9879140a1fe301f3d493f01b7c62dec7f46834be31d7e9fda
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.3.3"
+  url_launcher_android:
+    dependency: transitive
+    description:
+      name: url_launcher_android
+      sha256: "611e87fb320b70d1dd721dc46af89c98aceccea9b31fde49e084591414e0c610"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.3.33"
+  url_launcher_ios:
+    dependency: transitive
+    description:
+      name: url_launcher_ios
+      sha256: "8faa1aab294f1ab4040b43660c887b0418d5fa4f0cffef76a484e6aa1092eb4a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.4.2"
   url_launcher_linux:
     dependency: transitive
     description:
@@ -842,6 +883,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.3"
+  url_launcher_macos:
+    dependency: transitive
+    description:
+      name: url_launcher_macos
+      sha256: "5e835a3b869c2d70325349c81c5a45c28e20791265b67b2669da6b08c5cd5201"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.6"
   url_launcher_platform_interface:
     dependency: transitive
     description:
