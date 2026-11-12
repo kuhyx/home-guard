@@ -44,7 +44,7 @@ def _isolate_free_days(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
 
 
 @pytest.fixture(autouse=True)
-def _isolate_e2e_passphrase(monkeypatch: pytest.MonkeyPatch) -> None:
+def _isolate_e2e_passphrase(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Never read the real ``~/.config/crdt-sync/password``; cheap Argon2.
 
     ``get_sync_client`` reads the shared passphrase and derives a key with
@@ -56,6 +56,8 @@ def _isolate_e2e_passphrase(monkeypatch: pytest.MonkeyPatch) -> None:
 
     reset_e2e_copy_memo()
     monkeypatch.setattr(sync_client_module, "_read_passphrase", lambda: "test-pass")
+    # The derived-key cache would otherwise land in ~/.local/share/home_guard.
+    monkeypatch.setattr(sync_client_module, "E2E_STATE_DIR", tmp_path / "e2e")
     monkeypatch.setattr(
         sync_client_module,
         "ARGON2_PARAMS",

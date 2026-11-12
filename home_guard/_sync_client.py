@@ -27,7 +27,7 @@ from crdt_sync import (
     open_encrypted_client,
 )
 
-from home_guard._constants import APP_NAME, SYNC_OLD_PREFIX
+from home_guard._constants import APP_NAME, E2E_STATE_DIR, SYNC_OLD_PREFIX
 
 if TYPE_CHECKING:
     from crdt_sync import Argon2Params, RemoteStore
@@ -53,10 +53,10 @@ class _NoLegacyCopy:
     ``open_encrypted_client`` runs a one-time copy of the old prefix's CRDT
     logs. home-guard has none: its nodes are plain JSON transport blobs, so
     the copy can only ever pick up the drained ``{}`` evidence node (which
-    parses as an empty log) and merge it onto the new path -- crashing on,
-    or in the Dart library overwriting, a pending upload there. Each gate run
-    is a new process, so that copy would run every time. Hiding the old
-    prefix makes it a no-op; the old data stays where it is, untouched.
+    parses as an empty log). crdt-sync < 0.11.0 merged that onto a pending
+    upload at the new path (a crash here, wiped photos in Dart); 0.11.0
+    skips it, so this is now belt and braces plus one scan fewer per open.
+    The old data stays where it is, untouched.
     """
 
     def __init__(self, inner: RemoteStore) -> None:
@@ -109,6 +109,7 @@ def get_sync_client() -> RemoteStore:
             SYNC_OLD_PREFIX,
             passphrase=_read_passphrase(),
             params=ARGON2_PARAMS,
+            state_dir=E2E_STATE_DIR,
         )
     except E2eLockedError as exc:
         _logger.warning("home-guard sync locked, skipping: %s", exc)

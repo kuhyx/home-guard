@@ -40,6 +40,9 @@ ESCAPE_HATCH_HISTORY_FILE: Final = DATA_DIR / ".escape_hatch_history"
 # like the state files above: a disabled enforcement gate should be obvious in
 # a plain ``ls``, not hidden.
 DISARM_MARKER_FILE: Final = DATA_DIR / "DISARMED"
+# Derived E2E key (0600) and the one-time-copy memo, kept between gate runs
+# so a per-tick process does not rerun Argon2id (crdt-sync ``state_dir``).
+E2E_STATE_DIR: Final = DATA_DIR / "e2e"
 
 # Shared with every sibling locker on purpose -- one key, one place, same as
 # leetcode-guard's own install.sh does (its ensure_hmac_key() checks this

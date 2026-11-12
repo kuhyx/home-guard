@@ -119,10 +119,13 @@ def test_no_passphrase_is_locked_and_writes_nothing(
 
 
 def test_wrong_passphrase_is_locked_and_writes_nothing_more(
-    remote: FakeRemoteStore, monkeypatch: pytest.MonkeyPatch
+    remote: FakeRemoteStore, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     assert publish_zone_history(_ENTRIES) is True
     before = dict(remote._files)
+    # A fresh machine: no cached key from the right passphrase.
+    monkeypatch.setattr(sync_client_module, "E2E_STATE_DIR", tmp_path / "fresh")
+    reset_e2e_copy_memo()
     monkeypatch.setattr(sync_client_module, "_read_passphrase", lambda: "wrong")
     assert publish_challenge(_RECORD) is False
     assert fetch_zone_history() is None
@@ -181,3 +184,26 @@ def test_legacy_guard_delegates_everything_but_the_old_listing() -> None:
     assert guard.can_access_remote() is True
     guard.delete_file(f"{SYNC_PREFIX}/zones/current.json")
     assert inner.get_file_text(f"{SYNC_PREFIX}/zones/current.json") is None
+
+
+def test_derived_key_is_cached_privately_in_the_state_dir(
+    remote: FakeRemoteStore, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A per-tick gate process must not rerun Argon2id every time."""
+    state = tmp_path / "e2e-state"
+    monkeypatch.setattr(sync_client_module, "E2E_STATE_DIR", state)
+    assert publish_zone_history(_ENTRIES) is True
+    keys = list(state.glob("*.key"))
+    assert len(keys) == 1
+    assert keys[0].stat().st_mode & 0o077 == 0
+
+    reset_e2e_copy_memo()  # a fresh gate process
+    monkeypatch.setattr(sync_client_module, "_read_passphrase", lambda: "")
+    # The cached key opens the store with no passphrase file at all.
+    assert fetch_zone_history() == _ENTRIES
+
+
+def test_state_dir_defaults_under_the_data_dir() -> None:
+    from home_guard._constants import DATA_DIR, E2E_STATE_DIR
+
+    assert E2E_STATE_DIR.parent == DATA_DIR
