@@ -1,9 +1,9 @@
 import 'package:crdt_sync/crdt_sync.dart';
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:home_guard_app/screens/zones_screen.dart';
 import 'package:home_guard_app/services/zone_sync.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fake_remote_store.dart';

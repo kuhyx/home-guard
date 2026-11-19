@@ -8,9 +8,9 @@
 // entrypoint afterwards keeps the sign-in.
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:home_guard_app/services/firebase_backend.dart';
 import 'package:home_guard_app/ui/theme.dart';
+import 'package:material_ui/material_ui.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

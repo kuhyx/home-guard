@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:home_guard_app/screens/home_body.dart' show HomePhase;
 import 'package:home_guard_app/screens/home_cue.dart';
 import 'package:home_guard_app/ui/theme.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// The top of the home screen: headline glyph or zone name, photo tally,
 /// status cue and the PC's assigned zone. No painted words except the

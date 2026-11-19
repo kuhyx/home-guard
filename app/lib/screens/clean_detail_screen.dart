@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
 import 'package:home_guard_app/models/clean_session.dart';
 import 'package:home_guard_app/services/camera_capture.dart';
 import 'package:home_guard_app/services/session_store.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// One past clean: its photos, and a way to add more.
 ///

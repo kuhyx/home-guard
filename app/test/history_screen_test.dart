@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:crdt_sync/crdt_sync.dart';
 import 'package:design_system/design_system.dart' show FitGrid;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:home_guard_app/screens/home_screen.dart';
 import 'package:home_guard_app/services/challenge_sync.dart';
@@ -11,6 +10,7 @@ import 'package:home_guard_app/services/photo_encoder.dart';
 import 'package:home_guard_app/services/session_store.dart';
 import 'package:home_guard_app/services/zone_sync.dart';
 import 'package:home_guard_app/ui/theme.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fake_remote_store.dart';

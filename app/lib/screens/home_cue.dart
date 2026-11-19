@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:home_guard_app/ui/theme.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// One status note under the home headline, shown as an icon, never a
 /// sentence (kuhy's textgate rule). The old sentence survives only as the

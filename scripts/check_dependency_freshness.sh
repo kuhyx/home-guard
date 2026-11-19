@@ -11,7 +11,10 @@
 #
 # Usage:
 #   scripts/check_dependency_freshness.sh <file> [<file> ...]   # pre-commit
-#   scripts/check_dependency_freshness.sh --all --strict        # CI
+#   scripts/check_dependency_freshness.sh --all [--strict]      # whole repo, on demand
+#
+# Local only: CI skips this hook (SKIP in .github/workflows/pre-commit.yml),
+# so an upstream release overnight never turns a pushed commit red.
 #
 # Exit: 0 current | 1 behind | 2 allowlist wrong | 3 undeterminable (offline)
 # ============================================================================

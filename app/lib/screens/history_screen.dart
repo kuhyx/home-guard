@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart'
     show AppRadius, AppSpacing, FitGrid;
-import 'package:flutter/material.dart';
 import 'package:home_guard_app/models/clean_session.dart';
 import 'package:home_guard_app/screens/clean_detail_screen.dart';
 import 'package:home_guard_app/screens/log_clean_screen.dart';
 import 'package:home_guard_app/services/session_store.dart';
 import 'package:home_guard_app/ui/theme.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Every clean this phone has recorded, newest first.
 ///

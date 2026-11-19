@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:crdt_sync_flutter/crdt_sync_flutter.dart';
-import 'package:flutter/material.dart';
 import 'package:home_guard_app/models/challenge.dart';
 import 'package:home_guard_app/models/clean_session.dart';
 import 'package:home_guard_app/screens/history_screen.dart';
@@ -16,6 +15,7 @@ import 'package:home_guard_app/services/photo_encoder.dart';
 import 'package:home_guard_app/services/session_store.dart';
 import 'package:home_guard_app/services/upload_queue.dart';
 import 'package:home_guard_app/services/zone_sync.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Pick a place, photograph it as many times as it takes, finish.
 ///

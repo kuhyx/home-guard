@@ -1,7 +1,7 @@
 import 'package:design_system/design_system.dart' show FitGrid;
-import 'package:flutter/material.dart';
 import 'package:home_guard_app/screens/home_cue.dart';
 import 'package:home_guard_app/screens/home_header.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Where the home screen is in the capture flow.
 ///

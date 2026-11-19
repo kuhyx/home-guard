@@ -2,12 +2,12 @@
 // Bootstrap only: the two calls below reach platform channels that
 // `flutter test` has no binding for. Everything they wire is tested through
 // HomeScreen's injectable seams.
-import 'package:flutter/material.dart';
 import 'package:home_guard_app/screens/home_screen.dart';
 import 'package:home_guard_app/services/device_id.dart';
 import 'package:home_guard_app/services/session_files.dart';
 import 'package:home_guard_app/services/session_store.dart';
 import 'package:home_guard_app/ui/theme.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Entry point.
 Future<void> main() async {

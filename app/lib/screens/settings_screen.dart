@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:home_guard_app/screens/zones_screen.dart';
 import 'package:home_guard_app/services/firebase_backend.dart';
 import 'package:home_guard_app/services/google_sign_in_backend.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sync_settings_ui/sync_settings_ui.dart';
 
 /// Settings: only the shared Firebase "Sync settings" screen.

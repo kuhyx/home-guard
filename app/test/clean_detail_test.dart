@@ -1,11 +1,11 @@
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:home_guard_app/models/clean_session.dart';
 import 'package:home_guard_app/screens/clean_detail_screen.dart';
 import 'package:home_guard_app/services/session_store.dart';
 import 'package:home_guard_app/ui/theme.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'fake_session_files.dart';
 

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart' show AppRadius, AppSpacing;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// One zone as a tile: tap the cross to remove, long-press for the order.
 class ZoneTile extends StatelessWidget {

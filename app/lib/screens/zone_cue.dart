@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:home_guard_app/ui/theme.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// The zones screen's status note, shown as an icon (kuhy's textgate rule).
 /// The old sentence is kept as the spoken label only.
