@@ -108,3 +108,11 @@ def test_cmd_gate_gives_up_without_an_x_server(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setattr(cli_gate_module, "wait_for_x_server", lambda: False)
     args = build_parser().parse_args(["gate"])
     assert cli_gate_module.cmd_gate(args) == 1
+
+
+def test_help_ends_with_kuhy_credit() -> None:
+    from kuhy_credit import credit_line
+
+    from home_guard._cli import build_parser
+
+    assert build_parser().format_help().rstrip().endswith(credit_line())

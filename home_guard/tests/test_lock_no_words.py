@@ -18,6 +18,8 @@ import subprocess
 import sys
 import textwrap
 
+from kuhy_credit import TEXT as CREDIT_TEXT
+
 from home_guard.tests.test_lock_integration import _site_packages
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -77,7 +79,10 @@ _SCRIPT = textwrap.dedent(
     """
 )
 
-_ALLOWED = ("desk", "systemctl --user stop home-guard-gate.service")
+# The credit panel's words come from kuhy_credit (kuhy asked for his logo
+# in every program, as in the Flutter app); they are painted only once the
+# logo is clicked.
+_ALLOWED = ("desk", "systemctl --user stop home-guard-gate.service", CREDIT_TEXT)
 _WORD = re.compile(r"[A-Za-z]{2,}")
 
 

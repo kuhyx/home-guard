@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 from typing import TYPE_CHECKING
 
+from kuhy_credit import credit_line
+
 from home_guard._cli_gate import add_gate_parser
 from home_guard._cli_init import add_init_parser
 from home_guard._cli_status import add_status_parser
@@ -16,7 +18,7 @@ if TYPE_CHECKING:
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser with every subcommand registered."""
-    parser = argparse.ArgumentParser(prog="home_guard")
+    parser = argparse.ArgumentParser(prog="home_guard", epilog=credit_line())
     subparsers = parser.add_subparsers(dest="command", required=True)
     add_init_parser(subparsers)
     add_gate_parser(subparsers)

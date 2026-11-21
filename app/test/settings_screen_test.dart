@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:home_guard_app/screens/settings_screen.dart';
+import 'package:kuhy_credit/kuhy_credit.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sync_settings_ui/sync_settings_ui.dart';
 
@@ -20,5 +21,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.byType(SyncSettingsScreen), findsOneWidget);
+  });
+
+  testWidgets('shows KuhyCredit logo', (tester) async {
+    installFakeSecureStorage();
+    await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
+    expect(find.byType(KuhyCredit), findsOneWidget);
   });
 }

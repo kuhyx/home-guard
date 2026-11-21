@@ -1,7 +1,9 @@
 """Widgets for one lock surface: zone name, status icon, escape hatch.
 
 Text-free by kuhy's textgate rule: the only words painted are the zone name
-(his own content) and the bypass command (an escape phrase he types). Every
+(his own content), the bypass command (an escape phrase he types) and the
+shared kuhy credit panel's "Created by kuhy" (kuhy asked for his logo in
+every program; the words show only after a click on the logo). Every
 other cue is a drawn icon from ``_icons.py``; ``status_var`` holds an icon
 *name* (``wait``/``warn``/``no``), never a sentence.
 
@@ -21,6 +23,7 @@ import tkinter as tk
 from typing import TYPE_CHECKING
 
 from gatelock import LockConfig, RowStyle, row
+from kuhy_credit.tk import KuhyCredit
 
 from home_guard import _icons
 
@@ -136,3 +139,11 @@ def build_surface(
     icon_button(
         parent, config, "escape", on_report_trouble, color=config.palette.muted
     ).pack(padx=config.space("xl"), pady=config.space("lg"), anchor="w")
+
+    # kuhy's shared credit logo (kuhy_credit, kuhyx/utils), bottom-right of
+    # each output. A click on its panel opens the site in a browser tab,
+    # which stays behind the fullscreen lock until the lock closes.
+    pad = config.space("xl")
+    KuhyCredit(parent, theme="dark", size=config.type_px("display")).place(
+        relx=1, rely=1, x=-pad, y=-pad, anchor="se"
+    )
