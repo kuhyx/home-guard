@@ -1,16 +1,15 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:crdt_sync_flutter/crdt_sync_flutter.dart';
 import 'package:home_guard_app/models/challenge.dart';
 import 'package:home_guard_app/models/clean_session.dart';
 import 'package:home_guard_app/screens/history_screen.dart';
+import 'package:home_guard_app/screens/home_actions.dart';
 import 'package:home_guard_app/screens/home_body.dart';
 import 'package:home_guard_app/screens/home_cue.dart';
 import 'package:home_guard_app/screens/settings_screen.dart';
 import 'package:home_guard_app/services/camera_capture.dart';
 import 'package:home_guard_app/services/challenge_sync.dart';
-import 'package:home_guard_app/services/e2e_sync.dart';
 import 'package:home_guard_app/services/photo_encoder.dart';
 import 'package:home_guard_app/services/session_store.dart';
 import 'package:home_guard_app/services/upload_queue.dart';
@@ -218,31 +217,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        actions: [
-          // Icon-only E2E state: closed lock when this device has no (or
-          // the wrong) crdt-sync passphrase; tap to enter it, then recheck.
-          ValueListenableBuilder<bool>(
-            valueListenable: e2eLocked,
-            builder: (_, locked, _) => E2ePassphraseButton(
-              key: const Key('home-e2e'),
-              locked: locked,
-              onSaved: () => unawaited(_refresh()),
-            ),
-          ),
-          IconButton(
-            key: const Key('home-recheck'),
-            icon: const Icon(
-              Icons.refresh,
-              semanticLabel: 'Check the PC again',
-            ),
-            onPressed: _refresh,
-          ),
-          IconButton(
-            key: const Key('home-settings'),
-            icon: const Icon(Icons.settings, semanticLabel: 'Settings'),
-            onPressed: _openSettings,
-          ),
-        ],
+        actions: homeAppBarActions(
+          onRefresh: _refresh,
+          onOpenSettings: _openSettings,
+        ),
       ),
       body: HomeBody(
         phase: _phase,
