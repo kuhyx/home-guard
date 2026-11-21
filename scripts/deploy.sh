@@ -52,7 +52,7 @@ update_checkout() {
 # Imports that only resolve once the pinned deps are installed: the path
 # check alone let a crdt-sync bump (E2E: pynacl, argon2-cffi, 0.10.0's API)
 # skip pip and leave a daemon that cannot import its sync client.
-readonly DEPS_PROBE='import home_guard._sync_client, nacl, argon2'
+readonly DEPS_PROBE='import home_guard._sync_client, nacl, argon2, kuhy_credit.tk'
 
 install_package() {
     local file
@@ -73,8 +73,12 @@ check_desktop() {
     file=$(live_python -c 'import home_guard; print(home_guard.__file__)')
     [[ $file == "$LIVE_REPO/home_guard/"* ]] || fail imports "home_guard resolves to $file"
     out=$(live_python -m home_guard status) || fail status "home_guard status exited non-zero"
-    [[ $out == *"due slots today:"* ]] || fail status "no due-slots line in: $out"
-    log "desktop OK: $(grep -m1 'due slots today:' <<<"$out")"
+    # Both endings are healthy: status prints the due slots, or (early in the
+    # day, on a free day) "nothing due right now.".
+    local due
+    due=$(grep -m1 -e 'due slots today:' -e 'nothing due right now.' <<<"$out") \
+        || fail status "no due-slots line in: $out"
+    log "desktop OK: $due"
 }
 
 # is-enabled printed nothing for one unit once at loadavg 200 (a timed-out

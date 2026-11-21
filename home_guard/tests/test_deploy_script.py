@@ -20,7 +20,7 @@ _PYTHON_STUB = """#!/bin/bash
 case "$*" in
     *'print(home_guard.__file__)'*)
         echo "$HOME_GUARD_LIVE_REPO/home_guard/__init__.py" ;;
-    *'-m home_guard status'*) echo 'due slots today: 0800' ;;
+    *'-m home_guard status'*) echo "${STATUS_OUT:-due slots today: 0800}" ;;
     *'-m pip install'*) echo pip >> "$HOME/pip.calls" ;;
     *'import home_guard._sync_client'*)
         [[ -e "$HOME/pip.calls" ]] || exit "${DEPS_PROBE_EXIT:-0}" ;;
@@ -71,7 +71,11 @@ def _lagging_clone(tmp_path: Path) -> tuple[Path, str]:
 
 
 def _run_deploy(
-    tmp_path: Path, live: Path, *, deps_probe_exit: int = 0
+    tmp_path: Path,
+    live: Path,
+    *,
+    deps_probe_exit: int = 0,
+    status_out: str = "due slots today: 0800",
 ) -> subprocess.CompletedProcess[str]:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
@@ -86,6 +90,7 @@ def _run_deploy(
         "DEPLOY_PYTHON": str(_stub(tmp_path / "python3", _PYTHON_STUB)),
         "DISARM_MARKER": str(marker),
         "DEPS_PROBE_EXIT": str(deps_probe_exit),
+        "STATUS_OUT": status_out,
     }
     return subprocess.run(
         [_tool("bash"), str(_DEPLOY), "--desktop-only"],
@@ -106,6 +111,29 @@ def test_deploy_fast_forwards_a_lagging_live_checkout(tmp_path: Path) -> None:
     assert done.returncode == 0, done.stderr
     assert _git(live, "rev-parse", "HEAD") == newest
     assert "due slots today: 0800" in done.stderr
+
+
+def test_deploy_passes_when_no_slot_is_due_right_now(tmp_path: Path) -> None:
+    """Early morning or a free day: status is healthy with nothing due."""
+    live, _ = _lagging_clone(tmp_path)
+
+    done = _run_deploy(
+        tmp_path,
+        live,
+        status_out="Clear the kitchen counter to unlock.\nnothing due right now.",
+    )
+
+    assert done.returncode == 0, done.stderr
+    assert "nothing due right now." in done.stderr
+
+
+def test_deploy_fails_status_without_a_due_line(tmp_path: Path) -> None:
+    live, _ = _lagging_clone(tmp_path)
+
+    done = _run_deploy(tmp_path, live, status_out="Traceback: boom")
+
+    assert done.returncode != 0
+    assert "FAILED [status]" in done.stderr
 
 
 def test_deploy_fails_named_when_the_pull_cannot_fast_forward(tmp_path: Path) -> None:
