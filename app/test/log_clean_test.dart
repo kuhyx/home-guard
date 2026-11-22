@@ -62,6 +62,7 @@ void main() {
   testWidgets('saving is blocked until there is a photo', (tester) async {
     await _pump(tester);
     final save = tester.widget<IconButton>(find.byKey(const Key('log-save')));
+    expect(save.tooltip, 'Save');
     expect(save.onPressed, isNull);
     expect(find.bySemanticsLabel('Take at least one photo.'), findsOneWidget);
   });

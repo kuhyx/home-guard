@@ -24,6 +24,7 @@ List<Widget> homeAppBarActions({
   ),
   IconButton(
     key: const Key('home-recheck'),
+    tooltip: 'Recheck',
     icon: const Icon(Icons.refresh, semanticLabel: 'Check the PC again'),
     onPressed: onRefresh,
   ),

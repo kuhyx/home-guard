@@ -2,7 +2,7 @@ name: home_guard_app
 description: "home-guard phone app: shows the zone the PC is waiting on and uploads a camera-only photo echoing the PC's single-use challenge token."
 publish_to: 'none'
 
-version: 1.0.72+1
+version: 1.0.73+1
 
 environment:
   sdk: ^3.12.2
@@ -25,7 +25,7 @@ dependencies:
   design_system:
     git:
       url: https://github.com/kuhyx/utils
-      ref: design_system-v0.4.1
+      ref: design_system-v0.5.1
       path: design_system
   flutter:
     sdk: flutter
@@ -52,7 +52,7 @@ dependencies:
   kuhy_credit:
     git:
       url: https://github.com/kuhyx/utils
-      ref: kuhy-credit-v0.3.0
+      ref: kuhy-credit-v0.3.2
       path: kuhy_credit/flutter
   # Flutter 3.50 deprecates package:flutter/material.dart; the shared UI
   # packages (sync_settings_ui, crdt_sync_flutter) already sit on
@@ -67,7 +67,7 @@ dependencies:
   sync_settings_ui:
     git:
       url: https://github.com/kuhyx/utils
-      ref: sync_settings_ui-v0.8.4
+      ref: sync_settings_ui-v0.8.5
       path: sync_settings_ui
   uuid: 4.6.0
 

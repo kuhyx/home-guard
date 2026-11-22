@@ -147,6 +147,7 @@ class HomeBody extends StatelessWidget {
           const SizedBox(height: 8),
           IconButton(
             key: const Key('open-history'),
+            tooltip: 'History',
             onPressed: onOpenHistory,
             // Deliberately NOT Icons.photo_library: camera-only capture is
             // load-bearing security and a gallery icon anywhere in this app

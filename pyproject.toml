@@ -8,7 +8,7 @@ dependencies = [
     "crdt-sync @ git+https://github.com/kuhyx/utils@crdt-sync-v0.11.1#subdirectory=crdt-sync",
     "freedays @ git+https://github.com/kuhyx/utils@freedays-v0.4.3#subdirectory=freedays",
     # The "Created by kuhy" logo on the lock window.
-    "kuhy-credit @ git+https://github.com/kuhyx/utils@kuhy-credit-v0.3.0#subdirectory=kuhy_credit",
+    "kuhy-credit @ git+https://github.com/kuhyx/utils@kuhy-credit-v0.3.2#subdirectory=kuhy_credit",
     # crdt-sync's E2E cipher (XChaCha20-Poly1305) and key derivation
     # (Argon2id). Pinned here too so install.sh's import check names them.
     "argon2-cffi==25.1.0",

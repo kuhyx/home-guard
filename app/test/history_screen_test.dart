@@ -67,6 +67,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('finish')));
     await tester.pumpAndSettle();
+    expect(find.byTooltip('History'), findsOneWidget);
     await tester.tap(find.byKey(const Key('open-history')));
     await tester.pumpAndSettle();
 

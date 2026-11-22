@@ -194,6 +194,7 @@ class _LogCleanScreenState extends State<LogCleanScreen> {
             const SizedBox(height: 8),
             IconButton(
               key: const Key('log-save'),
+              tooltip: 'Save',
               onPressed: count == 0 || _busy ? null : _save,
               icon: const Icon(Icons.check, semanticLabel: 'Save this clean'),
               style: IconButton.styleFrom(
