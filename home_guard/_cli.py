@@ -1,4 +1,4 @@
-"""Top-level ``home_guard`` CLI: dispatch to init/gate/status/zones."""
+"""Top-level ``home_guard`` CLI: dispatch to init/gate/status/zones/history."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from kuhy_credit import credit_line
 
 from home_guard._cli_gate import add_gate_parser
+from home_guard._cli_history import add_history_parser
 from home_guard._cli_init import add_init_parser
 from home_guard._cli_status import add_status_parser
 from home_guard._cli_zones import add_zones_parser
@@ -24,6 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_gate_parser(subparsers)
     add_status_parser(subparsers)
     add_zones_parser(subparsers)
+    add_history_parser(subparsers)
     return parser
 
 

@@ -20,6 +20,9 @@ def test_build_parser_has_all_subcommands() -> None:
     parser = build_parser()
     args = parser.parse_args(["status"])
     assert args.command == "status"
+    # Verify history subcommand exists
+    args = parser.parse_args(["history"])
+    assert args.command == "history"
 
 
 def test_main_requires_a_subcommand() -> None:

@@ -20,7 +20,7 @@ commands + conventions only.
   `print()` calls in this exact repo (ruff's T201 "unsafe fix" strips the
   call entirely). Only ever use plain `--fix` (safe fixes) or `ruff format`,
   and re-run the test suite immediately after either.
-- Run the CLI directly: `python -m home_guard {init,status,gate,gate --demo}`.
+- Run the CLI directly: `python -m home_guard {init,status,gate,gate --demo,history}`.
 - MCP server venv: `./scripts/setup_mcp.sh` (see README's MCP section).
 - Git hooks on a fresh clone: `scripts/install_hooks.sh` (pre-commit + pre-push
   + the post-gate version bump for `app/pubspec.yaml`; see the script for
@@ -75,7 +75,7 @@ commands + conventions only.
   accepts instead of individual `*_path`/`*_key_file` kwargs (keeps
   `ruff`'s PLR0913 clean and gives tests one override point that can never
   leak into real `~/.local/share/home_guard` state).
-- `_cli*.py` / `__main__.py` — `init`/`status`/`gate` subcommands.
+- `_cli*.py` / `__main__.py` — `init`/`status`/`gate`/`zones`/`history` subcommands.
 - `_mcp.py` — read-only MCP server, no write tool at all (see README).
 
 ## Testing conventions

@@ -124,3 +124,9 @@ behalf, must never count.
 ```
 
 Restart Claude Code in this repo and approve the project MCP-server prompt.
+
+Every MCP tool has a CLI twin that works without Claude (useful when the
+usage limit is spent): `get_status`/`explain_lock` →
+`python -m home_guard status`, `get_zone_rotation` →
+`python -m home_guard zones`, `get_clear_history` →
+`python -m home_guard history [--limit N]`.
