@@ -30,9 +30,9 @@ commands + conventions only.
 - run: `python3 -m home_guard --help`
 - test: `xvfb-run -a -s "-screen 0 1600x1200x24" python -m pytest -q`
 - test-changed: `scripts/test_changed.sh`
-- lint: `uvx ruff@0.15.2 check .`
-- coverage: `python3 -m pytest home_guard/tests/ -q --cov=home_guard --cov-report=term-missing`
-- coverage-gaps: `coverage-gaps coverage.xml`
+- lint: n/a: dropped (kuhy, 2026-11-27)
+- coverage: n/a: dropped (kuhy, 2026-11-27)
+- coverage-gaps: n/a: dropped (kuhy, 2026-11-27)
 - deploy: `git -C ~/src/home-guard pull --ff-only && ~/src/home-guard/scripts/deploy.sh` (desktop editable install + status health check, leaves a DISARMED gate disarmed, then the release APK onto the Pixel; `--build-only` for board sessions, which cannot install)
 
 ## Architecture
